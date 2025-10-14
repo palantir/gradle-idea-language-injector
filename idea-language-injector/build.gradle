@@ -1,0 +1,30 @@
+apply plugin: 'com.palantir.gradle-plugin-testing'
+apply plugin: 'java-gradle-plugin'
+apply plugin: 'groovy'
+apply plugin: 'com.palantir.external-publish-jar'
+
+
+dependencies {
+    testImplementation gradleTestKit()
+    testImplementation 'com.netflix.nebula:nebula-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+}
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+}
+
+gradlePlugin {
+    website = 'https://github.com/palantir/gradle-idea-language-injector'
+    vcsUrl = 'https://github.com/palantir/gradle-idea-language-injector'
+
+    plugins {
+        ideaLanguageInjector {
+            id = 'com.palantir.idea-language-injector'
+            implementationClass = 'com.palantir.gradle.idealanguageinjector.SettingsPlugin'
+            displayName = 'Settings plugin to manage IDEA configuration files'
+            description = displayName
+        }
+    }
+}
