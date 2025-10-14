@@ -17,6 +17,7 @@
 package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.testing.execution.GradleInvoker;
+import com.palantir.gradle.testing.execution.GradleVersion;
 import com.palantir.gradle.testing.project.RootProject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,19 +36,16 @@ final class LibraryBuilder {
     private final Path projectDir;
     private final String group;
     private final String artifact;
-    private final String version;
     private final Path mavenRepo;
     private final GradleInvoker gradleInvoker;
     private final List<String> resourceFiles = new ArrayList<>();
 
-    LibraryBuilder(
-            Path projectDir, String group, String artifact, String version, Path mavenRepo, GradleInvoker gradleInvoker) {
-        this.projectDir = projectDir;
+    LibraryBuilder(String group, String artifact, Path mavenRepo) throws IOException {
+        this.projectDir = Files.createTempDirectory("lib-" + artifact);
         this.group = group;
         this.artifact = artifact;
-        this.version = version;
         this.mavenRepo = mavenRepo;
-        this.gradleInvoker = gradleInvoker;
+        this.gradleInvoker = new GradleInvoker(projectDir, new GradleVersion("8.14.3"));
     }
 
     LibraryBuilder withResource(String resourceFileName) {
@@ -76,7 +74,7 @@ final class LibraryBuilder {
                 }
 
                 group = '%s'
-                version = '%s'
+                version = '1.0.0'
 
                 repositories { mavenCentral() }
                 dependencies { compileOnly 'org.jetbrains:annotations:24.0.1' }
@@ -94,7 +92,7 @@ final class LibraryBuilder {
                     }
                 }
                 """
-                                .formatted(group, version, group, artifact, mavenRepo.toUri()));
+                                .formatted(group, group, artifact, mavenRepo.toUri()));
     }
 
     private void copyResourceFiles() {
@@ -102,7 +100,8 @@ final class LibraryBuilder {
             String content = readResource("/test-libraries/" + fileName);
             String packagePath = extractPackagePath(content);
 
-            Path targetFile = projectDir.resolve("src/main/java").resolve(packagePath).resolve(fileName);
+            Path targetFile =
+                    projectDir.resolve("src/main/java").resolve(packagePath).resolve(fileName);
 
             try {
                 Files.createDirectories(targetFile.getParent());

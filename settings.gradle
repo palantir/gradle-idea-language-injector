@@ -2,12 +2,15 @@ buildscript {
     repositories {
         mavenCentral() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
         gradlePluginPortal() { metadataSources { mavenPom(); ignoreGradleMetadataRedirection() } }
+        mavenLocal()
     }
     dependencies {
         classpath 'com.palantir.gradle.jdks:gradle-jdks-settings:0.62.0'
+        classpath 'com.palantir.gradle.idealanguageinjector:idea-language-injector:999'
     }
 }
 apply plugin: 'com.palantir.jdks.settings'
+apply plugin: 'com.palantir.idea-language-injector'
 rootProject.name = 'gradle-idea-language-injector'
 
 include 'idea-language-injector'

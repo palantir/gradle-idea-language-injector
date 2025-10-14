@@ -47,7 +47,7 @@ allprojects {
         mavenLocal()
     }
 
-    group 'com.palantir.gradle.idea-language-injector'
+    group 'com.palantir.gradle.idealanguageinjector'
     version rootProject.version
 }
 

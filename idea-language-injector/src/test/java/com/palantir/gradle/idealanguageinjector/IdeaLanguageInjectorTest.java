@@ -19,7 +19,6 @@ package com.palantir.gradle.idealanguageinjector;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.palantir.gradle.testing.execution.GradleInvoker;
-import com.palantir.gradle.testing.execution.GradleVersion;
 import com.palantir.gradle.testing.execution.InvocationResult;
 import com.palantir.gradle.testing.execution.TaskOutcome;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
@@ -29,26 +28,22 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @GradlePluginTests
 class IdeaLanguageInjectorTest {
     private Path localRepo;
-    private GradleVersion gradleVersion;
 
     @BeforeEach
-    void beforeEach(RootProject rootProject, GradleInvoker _gradle) {
+    void beforeEach(RootProject rootProject) {
         try {
             localRepo = Files.createTempDirectory("maven-repo");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
 
-        // Store the gradle version from the parameter for use in publishLibrary
-        gradleVersion = new GradleVersion("8.14.3"); // We'll use a fixed version for publishing libraries
-
-        // Set settings file with plugins block
         rootProject
                 .settingsGradle()
                 .edit(content ->
@@ -82,7 +77,7 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_dependencies_without_annotations_gracefully(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary(gradle, "com.example", "no-annotations", "1.0.0", "NoAnnotations.java");
+        String library = publishLibrary("com.example", "no-annotations", "NoAnnotations.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
@@ -93,7 +88,7 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void creates_IntelliLang_xml_with_proper_injection_patterns(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary(gradle, "com.example", "complex-lib", "1.0.0", "ComplexLib.java");
+        String library = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
@@ -155,11 +150,10 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary(gradle, "com.example", "simple-lib", "1.0.0", "SimpleLib.java");
+    void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
+        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
 
-        SubProject subproject = rootProject.subproject("subproject");
-        subproject
+        subProject
                 .buildGradle()
                 .overwrite(
                         """
@@ -189,23 +183,24 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void transform_is_cacheable(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary(gradle, "com.example", "simple-lib", "1.0.0", "SimpleLib.java");
+        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
                 .buildsSuccessfully();
-        InvocationResult result = gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
+
+        InvocationResult result = gradle.withArgs(
+                        "updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
                 .buildsSuccessfully();
 
-        assertThat(result.task(":updateIntelliLangXml"))
-                .hasValueSatisfying(task -> assertThat(task.outcome())
-                        .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
+        assertThat(result.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
+                .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
     }
 
     @Test
     void merges_multiple_libraries(GradleInvoker gradle, RootProject rootProject) {
-        String simpleLib = publishLibrary(gradle, "com.example", "simple-lib", "1.0.0", "SimpleLib.java");
-        String complexLib = publishLibrary(gradle, "com.example", "complex-lib", "1.0.0", "ComplexLib.java");
+        String simpleLib = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+        String complexLib = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
 
         rootProject
                 .buildGradle()
@@ -226,19 +221,13 @@ class IdeaLanguageInjectorTest {
         assertThat(actual).contains("ComplexLib (com.example.complex)");
     }
 
-    private String publishLibrary(
-            GradleInvoker _gradleInvoker, String group, String artifact, String version, String... resourceFiles) {
+    private String publishLibrary(String group, String artifact, String... resourceFiles) {
         try {
-            Path libraryDir = Files.createTempDirectory("lib-" + artifact);
-            GradleInvoker libGradleInvoker = new GradleInvoker(libraryDir, gradleVersion);
-
-            LibraryBuilder builder = new LibraryBuilder(libraryDir, group, artifact, version, localRepo, libGradleInvoker);
-            for (String resourceFile : resourceFiles) {
-                builder.withResource(resourceFile);
-            }
+            LibraryBuilder builder = new LibraryBuilder(group, artifact, localRepo);
+            Arrays.stream(resourceFiles).forEach(builder::withResource);
             builder.build();
 
-            return group + ":" + artifact + ":" + version;
+            return group + ":" + artifact + ":1.0.0";
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
