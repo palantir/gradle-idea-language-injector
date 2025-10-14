@@ -2,9 +2,19 @@ apply plugin: 'com.palantir.gradle-plugin-testing'
 apply plugin: 'java-gradle-plugin'
 apply plugin: 'groovy'
 apply plugin: 'com.palantir.external-publish-jar'
+apply plugin: 'com.palantir.shadow-jar'
 
 
 dependencies {
+    shadeTransitively 'com.fasterxml.jackson.core:jackson-databind'
+    shadeTransitively 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    shadeTransitively 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+    shadeTransitively 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
+    shadeTransitively 'org.ow2.asm:asm'
+
+    annotationProcessor 'org.immutables:value'
+    compileOnly 'org.immutables:value::annotations'
+
     testImplementation gradleTestKit()
     testImplementation 'com.netflix.nebula:nebula-test'
     testImplementation 'org.junit.jupiter:junit-jupiter'

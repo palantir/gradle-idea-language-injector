@@ -20,5 +20,17 @@ import org.gradle.api.initialization.Settings;
 
 public final class SettingsPlugin implements Plugin<Settings> {
     @Override
-    public void apply(Settings _settings) {}
+    public void apply(Settings settings) {
+        if (!Boolean.getBoolean("idea.active") || !Boolean.getBoolean("idea.sync.active")) {
+            return;
+        }
+
+        settings.getGradle().rootProject(rootProject -> {
+            rootProject.getPluginManager().apply(RootPlugin.class);
+        });
+
+        settings.getGradle().getLifecycle().beforeProject(project -> {
+            project.getPluginManager().apply(ProjectPlugin.class);
+        });
+    }
 }
