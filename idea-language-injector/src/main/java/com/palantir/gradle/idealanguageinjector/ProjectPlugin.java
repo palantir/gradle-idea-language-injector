@@ -91,20 +91,17 @@ public final class ProjectPlugin implements Plugin<Project> {
     }
 
     private static void createOutgoingConfiguration(Project project, TaskProvider<Sync> collectTask) {
-        // Create an outgoing configuration that provides the scanned artifacts
         project.getConfigurations().register(LANGUAGE_SCANS, outgoing -> {
             outgoing.setCanBeConsumed(true);
             outgoing.setCanBeResolved(false);
             outgoing.setDescription("Provides language scan artifacts for IntelliJ language injection");
 
-            // Add attributes to identify this configuration
             outgoing.attributes(attrs -> {
                 attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_SCANS));
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });
 
-            // The outgoing artifacts are the output of the collect task
             outgoing.getOutgoing().artifact(collectTask);
         });
     }

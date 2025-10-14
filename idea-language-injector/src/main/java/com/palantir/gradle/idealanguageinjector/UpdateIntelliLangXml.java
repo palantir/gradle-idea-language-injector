@@ -133,7 +133,6 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
                 .collect(Collectors.toMap(
                         InjectionKey::from,
                         injection -> injection,
-                        // If duplicate key, merge the places from both injections
                         UpdateIntelliLangXml::mergeInjections,
                         LinkedHashMap::new));
 
@@ -194,9 +193,6 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
         }
     }
 
-    /**
-     * Composite key for uniquely identifying an injection by display name, language, and injector ID.
-     */
     private record InjectionKey(String displayName, String language, String injectorId) {
         static InjectionKey from(IntelliLangInjection injection) {
             return new InjectionKey(injection.displayName(), injection.language(), injection.injectorId());

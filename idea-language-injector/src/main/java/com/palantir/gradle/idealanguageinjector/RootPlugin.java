@@ -27,16 +27,13 @@ import org.gradle.api.attributes.Usage;
 public class RootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
-        // Create dependency scope configuration for all projects (including root)
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("intellilang-subproject");
 
-        // Add all subprojects as dependencies
         rootProject.allprojects(subproject -> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
         });
 
-        // Create resolvable configuration that extends from the dependency scope
         NamedDomainObjectProvider<ResolvableConfiguration> resolvable = rootProject
                 .getConfigurations()
                 .resolvable("intellilangResolvable", conf -> {
@@ -51,7 +48,6 @@ public class RootPlugin implements Plugin<Project> {
                     });
                 });
 
-        // Create the task that consumes the aggregate configuration
         rootProject.getTasks().register("updateIntelliLangXml", UpdateIntelliLangXml.class, task -> {
             task.getArtifactFiles().from(resolvable);
         });
