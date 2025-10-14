@@ -28,3 +28,7 @@ gradlePlugin {
         }
     }
 }
+
+gradleTestUtils {
+    gradleVersions = ['8.14.3']
+}
