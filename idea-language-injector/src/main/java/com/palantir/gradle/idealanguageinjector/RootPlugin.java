@@ -29,7 +29,7 @@ public class RootPlugin implements Plugin<Project> {
     public void apply(Project rootProject) {
         // Create dependency scope configuration for all projects (including root)
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("subprojectLanguageScans");
+                rootProject.getConfigurations().dependencyScope("intellilang-subproject");
 
         // Add all subprojects as dependencies
         rootProject.allprojects(subproject -> {
@@ -39,12 +39,12 @@ public class RootPlugin implements Plugin<Project> {
         // Create resolvable configuration that extends from the dependency scope
         NamedDomainObjectProvider<ResolvableConfiguration> resolvable = rootProject
                 .getConfigurations()
-                .resolvable("aggregateLanguageScans", conf -> {
+                .resolvable("intellilangResolvable", conf -> {
                     conf.extendsFrom(subprojectDependencies.get());
                     conf.attributes(attrs -> {
                         attrs.attribute(
                                 Usage.USAGE_ATTRIBUTE,
-                                rootProject.getObjects().named(Usage.class, ProjectPlugin.SCANNED));
+                                rootProject.getObjects().named(Usage.class, ProjectPlugin.LANGUAGE_SCANS));
                         attrs.attribute(
                                 Category.CATEGORY_ATTRIBUTE,
                                 rootProject.getObjects().named(Category.class, Category.LIBRARY));

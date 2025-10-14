@@ -30,11 +30,8 @@ import org.gradle.api.tasks.TaskProvider;
 
 public final class ProjectPlugin implements Plugin<Project> {
 
-    static final String SCANNED = "language-scanned";
-
-    private static final String SCANNED_JAR_TYPE = "language-scanned-jar";
-    private static final String LANGUAGE_SCANS_CONFIGURATION = "languageScans";
-    private static final String COLLECT_LANGUAGE_SCANS_TASK = "collectLanguageScans";
+    static final String LANGUAGE_SCANS = "intellilang";
+    private static final String SCANNED_JAR_TYPE = "intellilang-scan";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
             Attribute.of("has-language-annotation", Boolean.class);
 
@@ -74,7 +71,7 @@ public final class ProjectPlugin implements Plugin<Project> {
     }
 
     private static TaskProvider<Sync> createCollectTask(Project project) {
-        return project.getTasks().register(COLLECT_LANGUAGE_SCANS_TASK, Sync.class, task -> {
+        return project.getTasks().register("collectLanguageScans", Sync.class, task -> {
             task.setDescription("Collects language scan files from dependencies");
             task.setGroup("build");
 
@@ -88,21 +85,21 @@ public final class ProjectPlugin implements Plugin<Project> {
             });
 
             DirectoryProperty outputDir = project.getObjects().directoryProperty();
-            outputDir.set(project.getLayout().getBuildDirectory().dir(SCANNED));
+            outputDir.set(project.getLayout().getBuildDirectory().dir(LANGUAGE_SCANS));
             task.into(outputDir);
         });
     }
 
     private static void createOutgoingConfiguration(Project project, TaskProvider<Sync> collectTask) {
         // Create an outgoing configuration that provides the scanned artifacts
-        project.getConfigurations().register(LANGUAGE_SCANS_CONFIGURATION, outgoing -> {
+        project.getConfigurations().register(LANGUAGE_SCANS, outgoing -> {
             outgoing.setCanBeConsumed(true);
             outgoing.setCanBeResolved(false);
             outgoing.setDescription("Provides language scan artifacts for IntelliJ language injection");
 
             // Add attributes to identify this configuration
             outgoing.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, SCANNED));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_SCANS));
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });
