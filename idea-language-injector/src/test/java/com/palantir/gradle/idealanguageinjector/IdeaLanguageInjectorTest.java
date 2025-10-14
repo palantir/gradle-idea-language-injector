@@ -44,6 +44,8 @@ class IdeaLanguageInjectorTest {
             throw new UncheckedIOException(e);
         }
 
+        rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
+
         rootProject
                 .settingsGradle()
                 .edit(content ->

@@ -27,15 +27,13 @@ import org.gradle.api.attributes.Usage;
 public class RootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
-        // Create dependency scope configuration for subprojects
+        // Create dependency scope configuration for all projects (including root)
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("subprojectLanguageScans");
 
         // Add all subprojects as dependencies
         rootProject.allprojects(subproject -> {
-            subproject.getPluginManager().withPlugin("java", _plugin -> {
-                rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
-            });
+            rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
         });
 
         // Create resolvable configuration that extends from the dependency scope
@@ -45,7 +43,8 @@ public class RootPlugin implements Plugin<Project> {
                     conf.extendsFrom(subprojectDependencies.get());
                     conf.attributes(attrs -> {
                         attrs.attribute(
-                                Usage.USAGE_ATTRIBUTE, rootProject.getObjects().named(Usage.class, "language-scans"));
+                                Usage.USAGE_ATTRIBUTE,
+                                rootProject.getObjects().named(Usage.class, ProjectPlugin.SCANNED));
                         attrs.attribute(
                                 Category.CATEGORY_ATTRIBUTE,
                                 rootProject.getObjects().named(Category.class, Category.LIBRARY));

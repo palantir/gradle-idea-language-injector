@@ -30,6 +30,8 @@ import org.gradle.api.tasks.TaskProvider;
 
 public final class ProjectPlugin implements Plugin<Project> {
 
+    static final String SCANNED = "language-scanned";
+
     private static final String SCANNED_JAR_TYPE = "language-scanned-jar";
     private static final String LANGUAGE_SCANS_CONFIGURATION = "languageScans";
     private static final String COLLECT_LANGUAGE_SCANS_TASK = "collectLanguageScans";
@@ -86,7 +88,7 @@ public final class ProjectPlugin implements Plugin<Project> {
             });
 
             DirectoryProperty outputDir = project.getObjects().directoryProperty();
-            outputDir.set(project.getLayout().getBuildDirectory().dir("language-scans"));
+            outputDir.set(project.getLayout().getBuildDirectory().dir(SCANNED));
             task.into(outputDir);
         });
     }
@@ -100,7 +102,7 @@ public final class ProjectPlugin implements Plugin<Project> {
 
             // Add attributes to identify this configuration
             outgoing.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, "language-scans"));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, SCANNED));
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });
