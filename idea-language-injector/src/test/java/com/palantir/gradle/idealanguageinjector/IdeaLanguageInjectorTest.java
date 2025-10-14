@@ -82,8 +82,7 @@ class IdeaLanguageInjectorTest {
         String library = publishLibrary("com.example", "no-annotations", "NoAnnotations.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
-        gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
     }
@@ -93,8 +92,7 @@ class IdeaLanguageInjectorTest {
         String library = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
-        gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         // language=xml
         String expected =
@@ -175,8 +173,7 @@ class IdeaLanguageInjectorTest {
                         """
                                 .formatted(localRepo.toUri(), library));
 
-        gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
         assertThat(actual).contains("SimpleLib (com.example.simple)");
@@ -189,12 +186,10 @@ class IdeaLanguageInjectorTest {
         String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
-        gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        InvocationResult result = gradle.withArgs(
-                        "updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        InvocationResult result =
+                gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         assertThat(result.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
                 .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
@@ -216,12 +211,128 @@ class IdeaLanguageInjectorTest {
                         """
                                 .formatted(simpleLib, complexLib));
 
-        gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
-                .buildsSuccessfully();
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
         assertThat(actual).contains("SimpleLib (com.example.simple)");
         assertThat(actual).contains("ComplexLib (com.example.complex)");
+    }
+
+    @Test
+    void handles_subproject_without_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
+        subProject
+                .buildGradle()
+                .overwrite(
+                        """
+                        plugins {
+                            id 'java'
+                        }
+                        """);
+
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+
+        assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
+    }
+
+    @Test
+    void handles_multiple_subprojects_with_mixed_dependencies(
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
+        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+
+        subProject1
+                .buildGradle()
+                .overwrite(
+                        """
+                        plugins {
+                            id 'java'
+                        }
+
+                        repositories {
+                            maven { url = uri('%s') }
+                            mavenCentral()
+                        }
+
+                        dependencies {
+                            implementation '%s'
+                        }
+                        """
+                                .formatted(localRepo.toUri(), library));
+
+        subProject2
+                .buildGradle()
+                .overwrite(
+                        """
+                        plugins {
+                            id 'java'
+                        }
+                        """);
+
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+
+        String actual = rootProject.file(".idea/IntelliLang.xml").text();
+        assertThat(actual).contains("SimpleLib (com.example.simple)");
+    }
+
+    @Test
+    void aggregates_dependencies_from_root_and_subproject(
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
+        String simpleLib = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+        String complexLib = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
+
+        rootProject.buildGradle().appendLine("dependencies { implementation '" + simpleLib + "' }");
+        subProject
+                .buildGradle()
+                .overwrite(
+                        """
+                        plugins {
+                            id 'java'
+                        }
+
+                        repositories {
+                            maven { url = uri('%s') }
+                            mavenCentral()
+                        }
+
+                        dependencies {
+                            implementation '%s'
+                        }
+                        """
+                                .formatted(localRepo.toUri(), complexLib));
+
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+
+        String actual = rootProject.file(".idea/IntelliLang.xml").text();
+        assertThat(actual).contains("SimpleLib (com.example.simple)");
+        assertThat(actual).contains("ComplexLib (com.example.complex)");
+    }
+
+    @Test
+    void handles_subproject_with_non_annotation_dependencies(
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
+        String library = publishLibrary("com.example", "no-annotations", "NoAnnotations.java");
+
+        subProject
+                .buildGradle()
+                .overwrite(
+                        """
+                        plugins {
+                            id 'java'
+                        }
+
+                        repositories {
+                            maven { url = uri('%s') }
+                            mavenCentral()
+                        }
+
+                        dependencies {
+                            implementation '%s'
+                        }
+                        """
+                                .formatted(localRepo.toUri(), library));
+
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+
+        assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
     }
 
     private String publishLibrary(String group, String artifact, String... resourceFiles) {

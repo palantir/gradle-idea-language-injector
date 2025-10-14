@@ -16,6 +16,9 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
+import java.util.ArrayList;
+import java.util.List;
+import org.gradle.StartParameter;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -23,6 +26,7 @@ import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.artifacts.ResolvableConfiguration;
 import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.tasks.TaskProvider;
 
 public class RootPlugin implements Plugin<Project> {
     @Override
@@ -48,8 +52,16 @@ public class RootPlugin implements Plugin<Project> {
                     });
                 });
 
-        rootProject.getTasks().register("updateIntelliLangXml", UpdateIntelliLangXml.class, task -> {
-            task.getArtifactFiles().from(resolvable);
-        });
+        TaskProvider<UpdateIntelliLangXml> update = rootProject
+                .getTasks()
+                .register("updateIntelliLangXml", UpdateIntelliLangXml.class, task -> {
+                    task.getArtifactFiles().from(resolvable);
+                });
+
+        // Add the tasks to the Gradle start parameters so they execute automatically.
+        StartParameter startParameter = rootProject.getGradle().getStartParameter();
+        List<String> taskNames = new ArrayList<>(startParameter.getTaskNames());
+        taskNames.add(":" + update.getName());
+        startParameter.setTaskNames(taskNames);
     }
 }
