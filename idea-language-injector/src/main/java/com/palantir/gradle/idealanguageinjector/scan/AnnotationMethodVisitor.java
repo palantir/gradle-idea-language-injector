@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector;
+package com.palantir.gradle.idealanguageinjector.scan;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,20 +23,20 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class LanguageAnnotationMethodVisitor extends MethodVisitor {
+public class AnnotationMethodVisitor extends MethodVisitor {
     private static final String LANGUAGE_ANNOTATION = "Lorg/intellij/lang/annotations/Language;";
     private static final String CONSTRUCTOR_NAME = "<init>";
 
     private final String className;
     private final String methodName;
     private final List<String> parameterTypes;
-    private final List<LanguageAnnotationInfo> findings;
+    private final List<AnnotationInfo> findings;
 
-    LanguageAnnotationMethodVisitor(
+    AnnotationMethodVisitor(
             String className,
             String methodName,
             String descriptor,
-            List<LanguageAnnotationInfo> findings,
+            List<AnnotationInfo> findings,
             boolean isNonStaticInnerClass) {
         super(Opcodes.ASM9);
         this.className = className;
@@ -65,7 +65,7 @@ public class LanguageAnnotationMethodVisitor extends MethodVisitor {
             @Override
             public void visit(String name, Object value) {
                 if ("value".equals(name) && value instanceof String languageValue) {
-                    findings.add(new LanguageAnnotationInfo(
+                    findings.add(new AnnotationInfo(
                             className, methodName, parameter, languageValue, parameterTypes));
                 }
             }

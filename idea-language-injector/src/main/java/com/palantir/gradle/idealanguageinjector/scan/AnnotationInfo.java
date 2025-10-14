@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector;
+package com.palantir.gradle.idealanguageinjector.scan;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
@@ -25,18 +25,18 @@ import java.util.stream.Collectors;
 /**
  * Information about a @Language annotation found on a method parameter.
  */
-public record LanguageAnnotationInfo(
+public record AnnotationInfo(
         String className, String methodName, int parameterIndex, String languageValue, List<String> parameterTypes) {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    public static void writeToFile(List<LanguageAnnotationInfo> annotations, File file) throws IOException {
+    public static void writeToFile(List<AnnotationInfo> annotations, File file) throws IOException {
         MAPPER.writeValue(file, annotations);
     }
 
-    public static List<LanguageAnnotationInfo> readFromFile(File file) throws IOException {
+    public static List<AnnotationInfo> readFromFile(File file) throws IOException {
         return MAPPER.readValue(
-                file, MAPPER.getTypeFactory().constructCollectionType(List.class, LanguageAnnotationInfo.class));
+                file, MAPPER.getTypeFactory().constructCollectionType(List.class, AnnotationInfo.class));
     }
 
     public String pattern() {

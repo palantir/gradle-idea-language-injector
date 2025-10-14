@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.intellilang;
+package com.palantir.gradle.idealanguageinjector.ideaxml;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlCData;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import org.immutables.value.Value;
 
 /**
- * Single-file configuration element for IntelliLang.xml.
+ * Place element containing PSI pattern for IntelliLang.xml.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableIntelliLangSingleFile.class)
+@JsonDeserialize(as = ImmutablePlace.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface IntelliLangSingleFile {
+public interface Place {
 
-    @JacksonXmlProperty(isAttribute = true)
-    @Value.Default
-    default String value() {
-        return "false";
-    }
+    @JacksonXmlText(value = true)
+    @JacksonXmlCData
+    String pattern();
 
-    static IntelliLangSingleFile defaultSingleFile() {
-        return ImmutableIntelliLangSingleFile.builder().build();
+    static Place of(String pattern) {
+        return ImmutablePlace.builder().pattern(pattern).build();
     }
 }

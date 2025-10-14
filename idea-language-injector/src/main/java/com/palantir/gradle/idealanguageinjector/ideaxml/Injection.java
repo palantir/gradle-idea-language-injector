@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.intellilang;
+package com.palantir.gradle.idealanguageinjector.ideaxml;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.palantir.gradle.idealanguageinjector.LanguageAnnotationInfo;
+import com.palantir.gradle.idealanguageinjector.scan.AnnotationInfo;
 import java.util.List;
 import org.immutables.value.Value;
 
@@ -28,9 +28,9 @@ import org.immutables.value.Value;
  * Represents a single language injection rule in IntelliLang.xml.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableIntelliLangInjection.class)
+@JsonDeserialize(as = ImmutableInjection.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface IntelliLangInjection {
+public interface Injection {
 
     @JacksonXmlProperty(isAttribute = true)
     String language();
@@ -46,23 +46,23 @@ public interface IntelliLangInjection {
 
     @JacksonXmlProperty(localName = "single-file")
     @Value.Default
-    default IntelliLangSingleFile singleFile() {
-        return IntelliLangSingleFile.defaultSingleFile();
+    default SingleFile singleFile() {
+        return SingleFile.defaultSingleFile();
     }
 
     @JacksonXmlProperty(localName = "place")
     @JacksonXmlElementWrapper(useWrapping = false)
-    List<IntelliLangPlace> places();
+    List<Place> places();
 
-    static ImmutableIntelliLangInjection.Builder builder() {
-        return ImmutableIntelliLangInjection.builder();
+    static ImmutableInjection.Builder builder() {
+        return ImmutableInjection.builder();
     }
 
-    static IntelliLangInjection from(LanguageAnnotationInfo info) {
+    static Injection from(AnnotationInfo info) {
         return builder()
                 .language(info.languageValue())
                 .displayName(info.displayName())
-                .addPlaces(IntelliLangPlace.of(info.pattern()))
+                .addPlaces(Place.of(info.pattern()))
                 .build();
     }
 }

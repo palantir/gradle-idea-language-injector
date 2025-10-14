@@ -14,27 +14,34 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.intellilang;
+package com.palantir.gradle.idealanguageinjector.ideaxml;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlCData;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import java.util.List;
 import org.immutables.value.Value;
 
 /**
- * Place element containing PSI pattern for IntelliLang.xml.
+ * Component element containing language injection configuration.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableIntelliLangPlace.class)
+@JsonDeserialize(as = ImmutableComponent.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface IntelliLangPlace {
+public interface Component {
 
-    @JacksonXmlText(value = true)
-    @JacksonXmlCData
-    String pattern();
+    @JacksonXmlProperty(isAttribute = true)
+    @Value.Default
+    default String name() {
+        return "LanguageInjectionConfiguration";
+    }
 
-    static IntelliLangPlace of(String pattern) {
-        return ImmutableIntelliLangPlace.builder().pattern(pattern).build();
+    @JacksonXmlProperty(localName = "injection")
+    @JacksonXmlElementWrapper(useWrapping = false)
+    List<Injection> injections();
+
+    static Component of(List<Injection> injections) {
+        return ImmutableComponent.builder().injections(injections).build();
     }
 }

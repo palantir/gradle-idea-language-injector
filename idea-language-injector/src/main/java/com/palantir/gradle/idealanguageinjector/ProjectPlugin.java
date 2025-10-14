@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
+import com.palantir.gradle.idealanguageinjector.scan.ScanTransform;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
@@ -30,8 +31,8 @@ import org.gradle.api.tasks.TaskProvider;
 
 public final class ProjectPlugin implements Plugin<Project> {
 
-    static final String LANGUAGE_SCANS = "intellilang";
-    private static final String SCANNED_JAR_TYPE = "intellilang-scan";
+    static final String ANNOTATION_SCANS = "annotation-scans";
+    private static final String SCANNED_JAR_TYPE = "language-annotation-scan";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
             Attribute.of("has-language-annotation", Boolean.class);
 
@@ -60,7 +61,7 @@ public final class ProjectPlugin implements Plugin<Project> {
     }
 
     private static void registerTransform(Project project) {
-        project.getDependencies().registerTransform(LanguageScanTransform.class, spec -> {
+        project.getDependencies().registerTransform(ScanTransform.class, spec -> {
             spec.getFrom()
                     .attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
                     .attribute(HAS_LANGUAGE_ANNOTATION, true);
@@ -85,19 +86,19 @@ public final class ProjectPlugin implements Plugin<Project> {
             });
 
             DirectoryProperty outputDir = project.getObjects().directoryProperty();
-            outputDir.set(project.getLayout().getBuildDirectory().dir(LANGUAGE_SCANS));
+            outputDir.set(project.getLayout().getBuildDirectory().dir(ANNOTATION_SCANS));
             task.into(outputDir);
         });
     }
 
     private static void createOutgoingConfiguration(Project project, TaskProvider<Sync> collectTask) {
-        project.getConfigurations().register(LANGUAGE_SCANS, outgoing -> {
+        project.getConfigurations().register(ANNOTATION_SCANS, outgoing -> {
             outgoing.setCanBeConsumed(true);
             outgoing.setCanBeResolved(false);
             outgoing.setDescription("Provides language scan artifacts for IntelliJ language injection");
 
             outgoing.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_SCANS));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, ANNOTATION_SCANS));
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });

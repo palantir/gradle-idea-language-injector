@@ -16,6 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
+import com.palantir.gradle.idealanguageinjector.ideaxml.UpdateXml;
 import java.util.ArrayList;
 import java.util.List;
 import org.gradle.StartParameter;
@@ -28,11 +29,11 @@ import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.tasks.TaskProvider;
 
-public class RootPlugin implements Plugin<Project> {
+public final class RootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("intellilang-subproject");
+                rootProject.getConfigurations().dependencyScope("ideaxml-subproject");
 
         rootProject.allprojects(subproject -> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
@@ -40,21 +41,21 @@ public class RootPlugin implements Plugin<Project> {
 
         NamedDomainObjectProvider<ResolvableConfiguration> resolvable = rootProject
                 .getConfigurations()
-                .resolvable("intellilangResolvable", conf -> {
+                .resolvable("ideaxmlResolvable", conf -> {
                     conf.extendsFrom(subprojectDependencies.get());
                     conf.attributes(attrs -> {
                         attrs.attribute(
                                 Usage.USAGE_ATTRIBUTE,
-                                rootProject.getObjects().named(Usage.class, ProjectPlugin.LANGUAGE_SCANS));
+                                rootProject.getObjects().named(Usage.class, ProjectPlugin.ANNOTATION_SCANS));
                         attrs.attribute(
                                 Category.CATEGORY_ATTRIBUTE,
                                 rootProject.getObjects().named(Category.class, Category.LIBRARY));
                     });
                 });
 
-        TaskProvider<UpdateIntelliLangXml> update = rootProject
+        TaskProvider<UpdateXml> update = rootProject
                 .getTasks()
-                .register("updateIntelliLangXml", UpdateIntelliLangXml.class, task -> {
+                .register("updateIntelliLangXml", UpdateXml.class, task -> {
                     task.getArtifactFiles().from(resolvable);
                 });
 

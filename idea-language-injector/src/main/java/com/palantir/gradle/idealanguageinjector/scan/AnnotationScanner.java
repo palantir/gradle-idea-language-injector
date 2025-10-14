@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector;
+package com.palantir.gradle.idealanguageinjector.scan;
 
 import java.util.List;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class LanguageAnnotationScanner extends ClassVisitor {
-    private final List<LanguageAnnotationInfo> findings;
+public class AnnotationScanner extends ClassVisitor {
+    private final List<AnnotationInfo> findings;
     private String currentClassName;
     private boolean isNonStaticInnerClass;
 
-    LanguageAnnotationScanner(List<LanguageAnnotationInfo> findings) {
+    AnnotationScanner(List<AnnotationInfo> findings) {
         super(Opcodes.ASM9);
         this.findings = findings;
     }
@@ -49,6 +49,6 @@ public class LanguageAnnotationScanner extends ClassVisitor {
     @Override
     public final MethodVisitor visitMethod(
             int _access, String name, String descriptor, String _signature, String[] _exceptions) {
-        return new LanguageAnnotationMethodVisitor(currentClassName, name, descriptor, findings, isNonStaticInnerClass);
+        return new AnnotationMethodVisitor(currentClassName, name, descriptor, findings, isNonStaticInnerClass);
     }
 }

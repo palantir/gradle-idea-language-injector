@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector;
+package com.palantir.gradle.idealanguageinjector.ideaxml;
 
 import com.ctc.wstx.stax.WstxInputFactory;
 import com.ctc.wstx.stax.WstxOutputFactory;
@@ -23,10 +23,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangComponent;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangInjection;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangPlace;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangProject;
+import com.palantir.gradle.idealanguageinjector.scan.AnnotationInfo;
+import com.palantir.gradle.idealanguageinjector.scan.ScanTransform;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -48,8 +46,8 @@ import org.gradle.api.tasks.TaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class UpdateIntelliLangXml extends DefaultTask {
-    private static final Logger log = LoggerFactory.getLogger(UpdateIntelliLangXml.class);
+public abstract class UpdateXml extends DefaultTask {
+    private static final Logger log = LoggerFactory.getLogger(UpdateXml.class);
 
     private static final ObjectMapper XML_MAPPER = new XmlMapper(new WstxInputFactory(), new WstxOutputFactory())
             .registerModule(new Jdk8Module())
@@ -65,15 +63,15 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
     @Inject
     protected abstract ProjectLayout getProjectLayout();
 
-    public UpdateIntelliLangXml() {
+    public UpdateXml() {
         getOutputFile().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
     }
 
     @TaskAction
     public final void updateXml() {
-        List<LanguageAnnotationInfo> annotationInfos = getArtifactFiles().getFiles().stream()
-                .flatMap(UpdateIntelliLangXml::findScanFiles)
-                .flatMap(UpdateIntelliLangXml::readAnnotationsFromFile)
+        List<AnnotationInfo> annotationInfos = getArtifactFiles().getFiles().stream()
+                .flatMap(UpdateXml::findScanFiles)
+                .flatMap(UpdateXml::readAnnotationsFromFile)
                 .toList();
 
         File outputFile = getOutputFile().get().getAsFile();
@@ -83,8 +81,8 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
             return;
         }
 
-        List<IntelliLangInjection> addedInjections = toIntelliLangInjections(annotationInfos);
-        IntelliLangProject updatedXml = readXml(outputFile)
+        List<Injection> addedInjections = toInjections(annotationInfos);
+        Project updatedXml = readXml(outputFile)
                 .map(existingProject -> mergeInjectionsIntoXml(existingProject, addedInjections))
                 .orElseGet(() -> createNewProject(addedInjections));
 
@@ -95,93 +93,93 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
         return Stream.of(file)
                 .flatMap(f -> f.isDirectory()
                         ? Optional.ofNullable(f.listFiles(
-                                        (_dir, name) -> name.endsWith(LanguageScanTransform.LANGUAGE_SCAN_FILE)))
+                                        (_dir, name) -> name.endsWith(ScanTransform.LANGUAGE_SCAN_FILE)))
                                 .stream()
                                 .flatMap(Stream::of)
-                        : Stream.of(f).filter(f1 -> f1.getName().endsWith(LanguageScanTransform.LANGUAGE_SCAN_FILE)));
+                        : Stream.of(f).filter(f1 -> f1.getName().endsWith(ScanTransform.LANGUAGE_SCAN_FILE)));
     }
 
-    private static Stream<LanguageAnnotationInfo> readAnnotationsFromFile(File dataFile) {
+    private static Stream<AnnotationInfo> readAnnotationsFromFile(File dataFile) {
         try {
-            return LanguageAnnotationInfo.readFromFile(dataFile).stream();
+            return AnnotationInfo.readFromFile(dataFile).stream();
         } catch (IOException e) {
             return Stream.empty();
         }
     }
 
-    private static Optional<IntelliLangProject> readXml(File outputFile) {
+    private static Optional<Project> readXml(File outputFile) {
         if (!outputFile.exists()) {
             return Optional.empty();
         }
         try {
-            return Optional.ofNullable(XML_MAPPER.readValue(outputFile, IntelliLangProject.class));
+            return Optional.ofNullable(XML_MAPPER.readValue(outputFile, Project.class));
         } catch (IOException e) {
             log.error("Failed to parse existing configuration file: {}", outputFile, e);
         }
         return Optional.empty();
     }
 
-    private static IntelliLangProject mergeInjectionsIntoXml(
-            IntelliLangProject existingProject, List<IntelliLangInjection> newInjections) {
+    private static Project mergeInjectionsIntoXml(
+            Project existingProject, List<Injection> newInjections) {
 
-        List<IntelliLangInjection> existingInjections =
+        List<Injection> existingInjections =
                 existingProject.component().injections();
 
         // Use composite key: (displayName, language, injectorId)
-        Map<InjectionKey, IntelliLangInjection> mergedMap = Stream.concat(
+        Map<InjectionKey, Injection> mergedMap = Stream.concat(
                         existingInjections.stream(), newInjections.stream())
                 .collect(Collectors.toMap(
                         InjectionKey::from,
                         injection -> injection,
-                        UpdateIntelliLangXml::mergeInjections,
+                        UpdateXml::mergeInjections,
                         LinkedHashMap::new));
 
-        List<IntelliLangInjection> mergedInjections = mergedMap.values().stream()
-                .sorted(Comparator.comparing(IntelliLangInjection::displayName)
-                        .thenComparing(IntelliLangInjection::language)
-                        .thenComparing(IntelliLangInjection::injectorId))
+        List<Injection> mergedInjections = mergedMap.values().stream()
+                .sorted(Comparator.comparing(Injection::displayName)
+                        .thenComparing(Injection::language)
+                        .thenComparing(Injection::injectorId))
                 .collect(Collectors.toList());
 
-        return IntelliLangProject.of(IntelliLangComponent.of(mergedInjections), existingProject.version());
+        return Project.of(Component.of(mergedInjections), existingProject.version());
     }
 
-    private static IntelliLangInjection mergeInjections(
-            IntelliLangInjection existing, IntelliLangInjection replacement) {
+    private static Injection mergeInjections(
+            Injection existing, Injection replacement) {
         // Combine places from both injections and remove duplicates
         List<String> mergedPlaces = Stream.concat(existing.places().stream(), replacement.places().stream())
-                .map(IntelliLangPlace::pattern)
+                .map(Place::pattern)
                 .distinct()
                 .sorted()
                 .toList();
 
-        return IntelliLangInjection.builder()
+        return Injection.builder()
                 .from(existing)
-                .places(mergedPlaces.stream().map(IntelliLangPlace::of).collect(Collectors.toList()))
+                .places(mergedPlaces.stream().map(Place::of).collect(Collectors.toList()))
                 .build();
     }
 
-    private static IntelliLangProject createNewProject(List<IntelliLangInjection> injections) {
+    private static Project createNewProject(List<Injection> injections) {
         // Merge injections with same composite key before creating project
-        Map<InjectionKey, IntelliLangInjection> mergedMap = injections.stream()
+        Map<InjectionKey, Injection> mergedMap = injections.stream()
                 .collect(Collectors.toMap(
                         InjectionKey::from,
                         injection -> injection,
-                        UpdateIntelliLangXml::mergeInjections,
+                        UpdateXml::mergeInjections,
                         LinkedHashMap::new));
 
-        List<IntelliLangInjection> sortedInjections = mergedMap.values().stream()
-                .sorted(Comparator.comparing(IntelliLangInjection::displayName)
-                        .thenComparing(IntelliLangInjection::language)
-                        .thenComparing(IntelliLangInjection::injectorId))
+        List<Injection> sortedInjections = mergedMap.values().stream()
+                .sorted(Comparator.comparing(Injection::displayName)
+                        .thenComparing(Injection::language)
+                        .thenComparing(Injection::injectorId))
                 .collect(Collectors.toList());
-        return IntelliLangProject.of(IntelliLangComponent.of(sortedInjections), "4");
+        return Project.of(Component.of(sortedInjections), "4");
     }
 
-    private static List<IntelliLangInjection> toIntelliLangInjections(List<LanguageAnnotationInfo> annotationInfos) {
-        return annotationInfos.stream().map(IntelliLangInjection::from).collect(Collectors.toList());
+    private static List<Injection> toInjections(List<AnnotationInfo> annotationInfos) {
+        return annotationInfos.stream().map(Injection::from).collect(Collectors.toList());
     }
 
-    private void writeXml(File outputFile, IntelliLangProject updatedXml) {
+    private void writeXml(File outputFile, Project updatedXml) {
         try {
             outputFile.getParentFile().mkdirs();
             XML_MAPPER.writeValue(outputFile, updatedXml);
@@ -194,7 +192,7 @@ public abstract class UpdateIntelliLangXml extends DefaultTask {
     }
 
     private record InjectionKey(String displayName, String language, String injectorId) {
-        static InjectionKey from(IntelliLangInjection injection) {
+        static InjectionKey from(Injection injection) {
             return new InjectionKey(injection.displayName(), injection.language(), injection.injectorId());
         }
     }

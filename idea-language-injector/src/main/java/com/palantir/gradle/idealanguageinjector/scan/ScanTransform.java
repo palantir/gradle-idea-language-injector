@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.idealanguageinjector;
+package com.palantir.gradle.idealanguageinjector.scan;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,29 +32,29 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.objectweb.asm.ClassReader;
 
-public abstract class LanguageScanTransform implements TransformAction<None> {
-    static final String LANGUAGE_SCAN_FILE = "language-annotations.languagedata";
+public abstract class ScanTransform implements TransformAction<None> {
+    public static final String LANGUAGE_SCAN_FILE = "language-annotations.languagedata";
 
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
 
     @Inject
-    public LanguageScanTransform() {}
+    public ScanTransform() {}
 
     @Override
     public final void transform(TransformOutputs outputs) {
         File jarFile = getInputArtifact().get().getAsFile();
-        List<LanguageAnnotationInfo> annotations = scanJarForAnnotations(jarFile);
+        List<AnnotationInfo> annotations = scanJarForAnnotations(jarFile);
 
         if (!annotations.isEmpty()) {
             writeAnnotationFile(outputs, jarFile, annotations);
         }
     }
 
-    private List<LanguageAnnotationInfo> scanJarForAnnotations(File jarFile) {
+    private List<AnnotationInfo> scanJarForAnnotations(File jarFile) {
         try (ZipFile zip = new ZipFile(jarFile)) {
             return zip.stream()
-                    .filter(LanguageScanTransform::isClassFile)
+                    .filter(ScanTransform::isClassFile)
                     .flatMap(entry -> scanClassEntry(zip, entry).stream())
                     .toList();
         } catch (IOException e) {
@@ -66,12 +66,12 @@ public abstract class LanguageScanTransform implements TransformAction<None> {
         return !entry.isDirectory() && entry.getName().endsWith(".class");
     }
 
-    private List<LanguageAnnotationInfo> scanClassEntry(ZipFile zip, ZipEntry entry) {
+    private List<AnnotationInfo> scanClassEntry(ZipFile zip, ZipEntry entry) {
         try (InputStream input = zip.getInputStream(entry)) {
-            List<LanguageAnnotationInfo> findings = new ArrayList<>();
+            List<AnnotationInfo> findings = new ArrayList<>();
             new ClassReader(input)
                     .accept(
-                            new LanguageAnnotationScanner(findings),
+                            new AnnotationScanner(findings),
                             ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
             return findings;
         } catch (IOException e) {
@@ -79,12 +79,12 @@ public abstract class LanguageScanTransform implements TransformAction<None> {
         }
     }
 
-    private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<LanguageAnnotationInfo> annotations) {
+    private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<AnnotationInfo> annotations) {
         try {
             String jarName = jarFile.getName();
             String baseName = jarName.endsWith(".jar") ? jarName.substring(0, jarName.length() - 4) : jarName;
             File outputFile = outputs.file(baseName + "-" + LANGUAGE_SCAN_FILE);
-            LanguageAnnotationInfo.writeToFile(annotations, outputFile);
+            AnnotationInfo.writeToFile(annotations, outputFile);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write language annotation data", e);
         }
