@@ -81,7 +81,6 @@ public abstract class LanguageScanTransform implements TransformAction<None> {
 
     private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<LanguageAnnotationInfo> annotations) {
         try {
-            // Use the JAR filename (without .jar extension) to create a unique output file name
             String jarName = jarFile.getName();
             String baseName = jarName.endsWith(".jar") ? jarName.substring(0, jarName.length() - 4) : jarName;
             File outputFile = outputs.file(baseName + "-" + LANGUAGE_SCAN_FILE);

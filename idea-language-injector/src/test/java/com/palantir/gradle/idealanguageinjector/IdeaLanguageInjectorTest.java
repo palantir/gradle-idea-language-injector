@@ -94,6 +94,7 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("updateIntelliLangXml", "-Didea.active=true", "-Didea.sync.active=true")
                 .buildsSuccessfully();
 
+        // language=xml
         String expected =
                 """
                 <project version="4">
