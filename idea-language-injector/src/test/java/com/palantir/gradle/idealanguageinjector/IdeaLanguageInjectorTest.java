@@ -24,11 +24,24 @@ import com.palantir.gradle.testing.execution.TaskOutcome;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
+import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
+import javax.tools.ToolProvider;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -38,12 +51,8 @@ class IdeaLanguageInjectorTest {
     private Path localRepo;
 
     @BeforeEach
-    void beforeEach(RootProject rootProject) {
-        try {
-            localRepo = Files.createTempDirectory("maven-repo");
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+    void beforeEach(RootProject rootProject) throws IOException {
+        localRepo = Files.createTempDirectory("maven-repo");
 
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
 
@@ -79,8 +88,9 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void handles_dependencies_without_annotations_gracefully(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary("com.example", "no-annotations", "NoAnnotations.java");
+    void handles_dependencies_without_annotations_gracefully(GradleInvoker gradle, RootProject rootProject)
+            throws IOException {
+        String library = publishLibrary("no-annotations", "NoAnnotations.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
@@ -89,8 +99,9 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void creates_IntelliLang_xml_with_proper_injection_patterns(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
+    void creates_IntelliLang_xml_with_proper_injection_patterns(GradleInvoker gradle, RootProject rootProject)
+            throws IOException {
+        String library = publishLibrary("complex-lib", "ComplexLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
@@ -152,8 +163,9 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+    void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject)
+            throws IOException {
+        String library = publishLibrary("simple-lib", "SimpleLib.java");
 
         subProject
                 .buildGradle()
@@ -183,8 +195,8 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void transform_is_cacheable(GradleInvoker gradle, RootProject rootProject) {
-        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+    void transform_is_cacheable(GradleInvoker gradle, RootProject rootProject) throws IOException {
+        String library = publishLibrary("simple-lib", "SimpleLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
@@ -197,9 +209,9 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void merges_multiple_libraries(GradleInvoker gradle, RootProject rootProject) {
-        String simpleLib = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
-        String complexLib = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
+    void merges_multiple_libraries(GradleInvoker gradle, RootProject rootProject) throws IOException {
+        String simpleLib = publishLibrary("simple-lib", "SimpleLib.java");
+        String complexLib = publishLibrary("complex-lib", "ComplexLib.java");
 
         rootProject
                 .buildGradle()
@@ -237,8 +249,9 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_multiple_subprojects_with_mixed_dependencies(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
-        String library = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2)
+            throws IOException {
+        String library = publishLibrary("simple-lib", "SimpleLib.java");
 
         subProject1
                 .buildGradle()
@@ -276,9 +289,9 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void aggregates_dependencies_from_root_and_subproject(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        String simpleLib = publishLibrary("com.example", "simple-lib", "SimpleLib.java");
-        String complexLib = publishLibrary("com.example", "complex-lib", "ComplexLib.java");
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) throws IOException {
+        String simpleLib = publishLibrary("simple-lib", "SimpleLib.java");
+        String complexLib = publishLibrary("complex-lib", "ComplexLib.java");
 
         rootProject.buildGradle().appendLine("dependencies { implementation '" + simpleLib + "' }");
         subProject
@@ -309,8 +322,8 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_subproject_with_non_annotation_dependencies(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        String library = publishLibrary("com.example", "no-annotations", "NoAnnotations.java");
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) throws IOException {
+        String library = publishLibrary("no-annotations", "NoAnnotations.java");
 
         subProject
                 .buildGradle()
@@ -336,15 +349,72 @@ class IdeaLanguageInjectorTest {
         assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
     }
 
-    private String publishLibrary(String group, String artifact, String... resourceFiles) {
-        try {
-            LibraryBuilder builder = new LibraryBuilder(group, artifact, localRepo);
-            Arrays.stream(resourceFiles).forEach(builder::withResource);
-            builder.build();
+    private String publishLibrary(String artifact, String... resourceFiles) throws IOException {
+        Path tempDir = Files.createTempDirectory("lib-" + artifact);
+        Path srcDir = tempDir.resolve("src");
+        Path binDir = tempDir.resolve("bin");
+        Files.createDirectories(binDir);
 
-            return group + ":" + artifact + ":1.0.0";
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+        // Write source files
+        List<File> sources = new ArrayList<>();
+        for (String fileName : resourceFiles) {
+            String content = readResource("/test-libraries/" + fileName);
+            Path path = srcDir.resolve(extractPackagePath(content)).resolve(fileName);
+            Files.createDirectories(path.getParent());
+            Files.writeString(path, content);
+            sources.add(path.toFile());
         }
+
+        // Compile
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
+            fm.setLocation(StandardLocation.CLASS_OUTPUT, List.of(binDir.toFile()));
+            compiler.getTask(
+                            null,
+                            fm,
+                            null,
+                            List.of("-cp", System.getProperty("java.class.path")),
+                            null,
+                            fm.getJavaFileObjectsFromFiles(sources))
+                    .call();
+        }
+
+        // Package JAR
+        Path repoDir = localRepo.resolve("com/example").resolve(artifact).resolve("1.0.0");
+        Files.createDirectories(repoDir);
+
+        try (JarOutputStream jar =
+                        new JarOutputStream(Files.newOutputStream(repoDir.resolve(artifact + "-1.0.0.jar")));
+                Stream<Path> stream = Files.walk(binDir)) {
+            for (Path file : stream.filter(Files::isRegularFile).toList()) {
+                jar.putNextEntry(new JarEntry(binDir.relativize(file).toString().replace(File.separatorChar, '/')));
+                Files.copy(file, jar);
+                jar.closeEntry();
+            }
+        }
+
+        Files.writeString(
+                repoDir.resolve(artifact + "-1.0.0.pom"),
+                String.format(
+                        """
+                        <?xml version="1.0"?>
+                        <project><modelVersion>4.0.0</modelVersion>
+                          <groupId>%s</groupId><artifactId>%s</artifactId><version>1.0.0</version>
+                        </project>""",
+                        "com.example", artifact));
+
+        return "com.example" + ":" + artifact + ":1.0.0";
+    }
+
+    private static String readResource(String path) throws IOException {
+        try (InputStream is = IdeaLanguageInjectorTest.class.getResourceAsStream(path)) {
+            Assertions.assertNotNull(is);
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
+
+    private static String extractPackagePath(String content) {
+        Matcher matcher = Pattern.compile("package\\s+([\\w.]+);").matcher(content);
+        return matcher.find() ? matcher.group(1).replace('.', '/') : "";
     }
 }
