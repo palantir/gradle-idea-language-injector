@@ -33,16 +33,23 @@ import org.immutables.value.Value;
 public interface Project {
 
     @JacksonXmlProperty(isAttribute = true)
-    String version();
+    @Value.Default
+    default String version() {
+        return "4";
+    }
 
     @JacksonXmlProperty(localName = "component")
     Component component();
+
+    static Project of(Component component) {
+        return ImmutableProject.builder().component(component).build();
+    }
 
     static Project of(Component component, String version) {
         return ImmutableProject.builder().component(component).version(version).build();
     }
 
     static Project empty() {
-        return Project.of(Component.of(List.of()), "4");
+        return Project.of(Component.of(List.of()));
     }
 }

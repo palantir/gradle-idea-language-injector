@@ -62,7 +62,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         List<Injection> injections = scanJarForInjections(jarFile);
 
         if (!injections.isEmpty()) {
-            writeAnnotationFile(outputs, jarFile, injections);
+            writeXml(outputs, jarFile, injections);
         }
     }
 
@@ -92,11 +92,11 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         }
     }
 
-    private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<Injection> injections) {
+    private void writeXml(TransformOutputs outputs, File jarFile, List<Injection> injections) {
         try {
-            Project component = Project.of(Component.of(injections), "4");
             XML_MAPPER.writeValue(
-                    outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE), component);
+                    outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE),
+                    Project.of(Component.of(injections)));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write language annotation data", e);
         }

@@ -53,13 +53,13 @@ public abstract class UpdateXml extends DefaultTask {
     public abstract ConfigurableFileCollection getArtifactFiles();
 
     @OutputFile
-    public abstract RegularFileProperty getOutputFile();
+    public abstract RegularFileProperty getIntelliLang();
 
     @Inject
     protected abstract ProjectLayout getProjectLayout();
 
     public UpdateXml() {
-        getOutputFile().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
+        getIntelliLang().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
     }
 
     @TaskAction
@@ -70,14 +70,14 @@ public abstract class UpdateXml extends DefaultTask {
                 .flatMap(project -> project.component().injections().stream())
                 .toList();
 
-        File outputFile = getOutputFile().get().getAsFile();
+        File intelliLang = getIntelliLang().get().getAsFile();
 
         if (addedInjections.isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        writeXml(outputFile, createOrMergeProject(readXml(outputFile), addedInjections));
+        writeXml(intelliLang, mergeProject(readXml(intelliLang), addedInjections));
     }
 
     private static Stream<File> findScanFiles(File file) {
@@ -103,7 +103,7 @@ public abstract class UpdateXml extends DefaultTask {
         }
     }
 
-    private static Project createOrMergeProject(Project existing, List<Injection> newInjections) {
+    private static Project mergeProject(Project existing, List<Injection> newInjections) {
         List<Injection> allInjections = Stream.concat(
                         existing.component().injections().stream(), newInjections.stream())
                 .toList();
@@ -117,7 +117,7 @@ public abstract class UpdateXml extends DefaultTask {
         } catch (IOException e) {
             throw new UncheckedIOException(
                     "Failed to write back to configuration file: "
-                            + getOutputFile().get(),
+                            + getIntelliLang().get(),
                     e);
         }
     }
