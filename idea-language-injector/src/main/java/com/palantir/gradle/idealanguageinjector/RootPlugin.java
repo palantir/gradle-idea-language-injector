@@ -46,7 +46,7 @@ public final class RootPlugin implements Plugin<Project> {
                     conf.attributes(attrs -> {
                         attrs.attribute(
                                 Usage.USAGE_ATTRIBUTE,
-                                rootProject.getObjects().named(Usage.class, ProjectPlugin.ANNOTATION_SCANS));
+                                rootProject.getObjects().named(Usage.class, ProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
                         attrs.attribute(
                                 Category.CATEGORY_ATTRIBUTE,
                                 rootProject.getObjects().named(Category.class, Category.LIBRARY));

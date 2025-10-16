@@ -31,8 +31,7 @@ import org.gradle.api.tasks.TaskProvider;
 
 public final class ProjectPlugin implements Plugin<Project> {
 
-    static final String ANNOTATION_SCANS = "annotation-scans";
-    private static final String SCANNED_JAR_TYPE = "language-annotation-scan";
+    static final String LANGUAGE_ANNOTATION_SCANS = "language-annotation-scans";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
             Attribute.of("has-language-annotation", Boolean.class);
 
@@ -66,39 +65,37 @@ public final class ProjectPlugin implements Plugin<Project> {
                     .attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
                     .attribute(HAS_LANGUAGE_ANNOTATION, true);
             spec.getTo()
-                    .attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, SCANNED_JAR_TYPE)
+                    .attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, LANGUAGE_ANNOTATION_SCANS)
                     .attribute(HAS_LANGUAGE_ANNOTATION, true);
         });
     }
 
     private static TaskProvider<Sync> createCollectTask(Project project) {
         return project.getTasks().register("collectLanguageScans", Sync.class, task -> {
-            task.setDescription("Collects language scan files from dependencies");
-            task.setGroup("build");
-
             project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
-                String compileClasspathName = sourceSet.getCompileClasspathConfigurationName();
-                task.from(
-                        project.getConfigurations().named(compileClasspathName).map(conf -> conf.getIncoming()
+                task.from(project.getConfigurations()
+                        .named(sourceSet.getCompileClasspathConfigurationName())
+                        .map(conf -> conf.getIncoming()
                                 .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, SCANNED_JAR_TYPE)))
+                                        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, LANGUAGE_ANNOTATION_SCANS)))
                                 .getFiles()));
             });
 
             DirectoryProperty outputDir = project.getObjects().directoryProperty();
-            outputDir.set(project.getLayout().getBuildDirectory().dir(ANNOTATION_SCANS));
+            outputDir.set(project.getLayout().getBuildDirectory().dir("annotation-scans-output"));
             task.into(outputDir);
         });
     }
 
     private static void createOutgoingConfiguration(Project project, TaskProvider<Sync> collectTask) {
-        project.getConfigurations().register(ANNOTATION_SCANS, outgoing -> {
+        project.getConfigurations().register(LANGUAGE_ANNOTATION_SCANS, outgoing -> {
             outgoing.setCanBeConsumed(true);
             outgoing.setCanBeResolved(false);
             outgoing.setDescription("Provides language scan artifacts for IntelliJ language injection");
 
             outgoing.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, ANNOTATION_SCANS));
+                attrs.attribute(
+                        Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_ANNOTATION_SCANS));
                 attrs.attribute(
                         Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });
