@@ -165,8 +165,8 @@ public abstract class UpdateXml extends DefaultTask {
         return Project.of(Component.of(sortedInjections), "4");
     }
 
-    private static List<Injection> toInjections(List<LanguageInjectionPattern> LanguageInjectionPatterns) {
-        return LanguageInjectionPatterns.stream().map(Injection::from).collect(Collectors.toList());
+    private static List<Injection> toInjections(List<LanguageInjectionPattern> languageInjectionPatterns) {
+        return languageInjectionPatterns.stream().map(Injection::from).collect(Collectors.toList());
     }
 
     private void writeXml(File outputFile, Project updatedXml) {

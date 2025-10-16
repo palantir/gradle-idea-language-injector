@@ -80,12 +80,14 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
     private void writeAnnotationFile(
             TransformOutputs outputs, File jarFile, List<LanguageInjectionPattern> annotations) {
         try {
-            String jarName = jarFile.getName();
-            String baseName = jarName.endsWith(".jar") ? jarName.substring(0, jarName.length() - 4) : jarName;
-            File outputFile = outputs.file(baseName + "-" + LANGUAGE_SCAN_FILE);
-            LanguageInjectionPattern.writeToFile(annotations, outputFile);
+            LanguageInjectionPattern.writeToFile(
+                    annotations, outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write language annotation data", e);
         }
+    }
+
+    private static String stripJarExtension(String fileName) {
+        return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : fileName;
     }
 }

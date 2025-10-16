@@ -23,19 +23,11 @@ final class PatternBuilder {
     private PatternBuilder() {}
 
     static String buildDisplayName(String className) {
-        int lastPackageDot = className.lastIndexOf('.');
-        String packageName = lastPackageDot > 0 ? className.substring(0, lastPackageDot) : "";
-        String classHierarchy = className.substring(lastPackageDot + 1).replace('$', '.');
+        String normalizedClassName = className.replace('$', '.');
+        int lastDot = normalizedClassName.lastIndexOf('.');
 
-        int lastHierarchyDot = classHierarchy.lastIndexOf('.');
-        String simpleClassName =
-                lastHierarchyDot == -1 ? classHierarchy : classHierarchy.substring(lastHierarchyDot + 1);
-
-        String containingPackage = lastHierarchyDot == -1
-                ? packageName
-                : (packageName.isEmpty()
-                        ? classHierarchy.substring(0, lastHierarchyDot)
-                        : packageName + "." + classHierarchy.substring(0, lastHierarchyDot));
+        String simpleClassName = normalizedClassName.substring(lastDot + 1);
+        String containingPackage = lastDot > 0 ? normalizedClassName.substring(0, lastDot) : "";
 
         return String.format("%s (%s)", simpleClassName, containingPackage);
     }
@@ -45,7 +37,7 @@ final class PatternBuilder {
         String paramTypes =
                 parameterTypes.stream().map(type -> "\"" + type + "\"").collect(Collectors.joining(", "));
 
-        String patternMethodName = "<init>".equals(methodName) ? extractSimpleClassName(className) : methodName;
+        String patternMethodName = methodName.equals("<init>") ? extractSimpleClassName(className) : methodName;
 
         String normalizedClassName = className.replace('$', '.');
 
@@ -55,8 +47,9 @@ final class PatternBuilder {
     }
 
     private static String extractSimpleClassName(String className) {
-        String internalName = className.replace('.', '/');
-        int lastDelimiter = Math.max(internalName.lastIndexOf('$'), internalName.lastIndexOf('/'));
-        return internalName.substring(lastDelimiter + 1);
+        int lastDot = className.lastIndexOf('.');
+        int lastDollar = className.lastIndexOf('$');
+        int lastDelimiter = Math.max(lastDot, lastDollar);
+        return className.substring(lastDelimiter + 1);
     }
 }
