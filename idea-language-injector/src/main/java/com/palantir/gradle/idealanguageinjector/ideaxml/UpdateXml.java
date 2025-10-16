@@ -16,17 +16,8 @@
 
 package com.palantir.gradle.idealanguageinjector.ideaxml;
 
-import com.ctc.wstx.stax.WstxInputFactory;
-import com.ctc.wstx.stax.WstxOutputFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -44,11 +35,6 @@ import org.slf4j.LoggerFactory;
 public abstract class UpdateXml extends DefaultTask {
     private static final Logger log = LoggerFactory.getLogger(UpdateXml.class);
 
-    private static final ObjectMapper XML_MAPPER = new XmlMapper(new WstxInputFactory(), new WstxOutputFactory())
-            .registerModule(new Jdk8Module())
-            .registerModule(new GuavaModule())
-            .enable(SerializationFeature.INDENT_OUTPUT);
-
     @InputFiles
     public abstract ConfigurableFileCollection getArtifactFiles();
 
@@ -64,20 +50,23 @@ public abstract class UpdateXml extends DefaultTask {
 
     @TaskAction
     public final void updateXml() {
-        List<Injection> addedInjections = getArtifactFiles().getFiles().stream()
-                .flatMap(UpdateXml::findScanFiles)
-                .map(UpdateXml::readXml)
-                .flatMap(project -> project.component().injections().stream())
-                .toList();
-
         File intelliLang = getIntelliLang().get().getAsFile();
 
-        if (addedInjections.isEmpty()) {
+        List<Project> allProjects = Stream.concat(
+                        Stream.of(IntelliLangXml.read(intelliLang)),
+                        getArtifactFiles().getFiles().stream()
+                                .flatMap(UpdateXml::findScanFiles)
+                                .map(IntelliLangXml::read))
+                .toList();
+
+        Project merged = Project.mergeAll(allProjects);
+
+        if (merged.component().injections().isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        writeXml(intelliLang, mergeProject(readXml(intelliLang), addedInjections));
+        IntelliLangXml.write(intelliLang, merged);
     }
 
     private static Stream<File> findScanFiles(File file) {
@@ -88,37 +77,5 @@ public abstract class UpdateXml extends DefaultTask {
                                 .stream()
                                 .flatMap(Stream::of)
                         : Stream.of(f).filter(f1 -> f1.getName().endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)));
-    }
-
-    private static Project readXml(File file) {
-        if (!file.exists()) {
-            return Project.empty();
-        }
-        try {
-            return Optional.ofNullable(XML_MAPPER.readValue(file, Project.class))
-                    .orElseGet(Project::empty);
-        } catch (IOException e) {
-            log.error("Failed to parse existing configuration file: {}", file, e);
-            return Project.empty();
-        }
-    }
-
-    private static Project mergeProject(Project existing, List<Injection> newInjections) {
-        List<Injection> allInjections = Stream.concat(
-                        existing.component().injections().stream(), newInjections.stream())
-                .toList();
-        return Project.of(Component.of(allInjections), existing.version());
-    }
-
-    private void writeXml(File outputFile, Project updatedXml) {
-        try {
-            outputFile.getParentFile().mkdirs();
-            XML_MAPPER.writeValue(outputFile, updatedXml);
-        } catch (IOException e) {
-            throw new UncheckedIOException(
-                    "Failed to write back to configuration file: "
-                            + getIntelliLang().get(),
-                    e);
-        }
     }
 }

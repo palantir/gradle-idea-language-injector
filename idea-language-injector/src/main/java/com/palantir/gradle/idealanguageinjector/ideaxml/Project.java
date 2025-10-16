@@ -45,11 +45,14 @@ public interface Project {
         return ImmutableProject.builder().component(component).build();
     }
 
-    static Project of(Component component, String version) {
-        return ImmutableProject.builder().component(component).version(version).build();
-    }
-
     static Project empty() {
         return Project.of(Component.of(List.of()));
+    }
+
+    static Project mergeAll(List<Project> projects) {
+        List<Injection> allInjections = projects.stream()
+                .flatMap(project -> project.component().injections().stream())
+                .toList();
+        return Project.of(Component.of(allInjections));
     }
 }
