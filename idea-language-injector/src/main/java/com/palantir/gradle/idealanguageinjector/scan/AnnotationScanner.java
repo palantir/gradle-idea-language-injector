@@ -16,40 +16,53 @@
 
 package com.palantir.gradle.idealanguageinjector.scan;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
-public class AnnotationScanner extends ClassVisitor {
+public final class AnnotationScanner extends ClassVisitor {
     private static final String LANGUAGE_ANNOTATION = "Lorg/intellij/lang/annotations/Language;";
     private static final String CONSTRUCTOR_NAME = "<init>";
+    private static final int SCAN_FLAGS = ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES;
 
-    private final List<AnnotationInfo> findings = new ArrayList<>();
+    private final List<AnnotationInfo> findings;
     private String currentClassName;
     private boolean isNonStaticInnerClass;
 
-    AnnotationScanner() {
+    private AnnotationScanner(List<AnnotationInfo> findings) {
         super(Opcodes.ASM9);
+        this.findings = findings;
     }
 
-    public final List<AnnotationInfo> getFindings() {
-        return findings;
+    public static Stream<AnnotationInfo> scanClass(ZipFile zip, ZipEntry entry) {
+        try (InputStream input = zip.getInputStream(entry)) {
+            List<AnnotationInfo> findings = new ArrayList<>();
+            new ClassReader(input).accept(new AnnotationScanner(findings), SCAN_FLAGS);
+            return findings.stream();
+        } catch (IOException e) {
+            return Stream.empty();
+        }
     }
 
     @Override
-    public final void visit(
-            int version, int access, String name, String signature, String superName, String[] interfaces) {
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         this.currentClassName = name.replace('/', '.');
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     @Override
-    public final void visitInnerClass(String name, String outerName, String innerName, int access) {
+    public void visitInnerClass(String name, String outerName, String innerName, int access) {
         if (name.replace('/', '.').equals(currentClassName)) {
             isNonStaticInnerClass = (access & Opcodes.ACC_STATIC) == 0;
         }
@@ -57,7 +70,7 @@ public class AnnotationScanner extends ClassVisitor {
     }
 
     @Override
-    public final MethodVisitor visitMethod(
+    public MethodVisitor visitMethod(
             int _access, String name, String descriptor, String _signature, String[] _exceptions) {
         return new MethodScanner(name, descriptor);
     }

@@ -17,7 +17,6 @@ package com.palantir.gradle.idealanguageinjector.scan;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -29,7 +28,6 @@ import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters.None;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
-import org.objectweb.asm.ClassReader;
 
 public abstract class AnnotationScanTransform implements TransformAction<None> {
     public static final String LANGUAGE_SCAN_FILE = "language-annotations.languagedata";
@@ -54,7 +52,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         try (ZipFile zip = new ZipFile(jarFile)) {
             return zip.stream()
                     .filter(AnnotationScanTransform::isClassFile)
-                    .flatMap(entry -> scanClassEntry(zip, entry).stream())
+                    .flatMap(entry -> AnnotationScanner.scanClass(zip, entry))
                     .toList();
         } catch (IOException e) {
             return List.of();
@@ -63,17 +61,6 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
 
     private static boolean isClassFile(ZipEntry entry) {
         return !entry.isDirectory() && entry.getName().endsWith(".class");
-    }
-
-    private List<AnnotationInfo> scanClassEntry(ZipFile zip, ZipEntry entry) {
-        try (InputStream input = zip.getInputStream(entry)) {
-            AnnotationScanner scanner = new AnnotationScanner();
-            new ClassReader(input)
-                    .accept(scanner, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-            return scanner.getFindings();
-        } catch (IOException e) {
-            return List.of();
-        }
     }
 
     private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<AnnotationInfo> annotations) {
