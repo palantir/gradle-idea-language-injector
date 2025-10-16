@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.idealanguageinjector.scan;
+package com.palantir.gradle.idealanguageinjector.ideaxml;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-final class PatternBuilder {
+public final class PatternBuilder {
 
     private PatternBuilder() {}
 
-    static String buildDisplayName(String className) {
+    public static String buildDisplayName(String className) {
         String normalizedClassName = className.replace('$', '.');
         int lastDot = normalizedClassName.lastIndexOf('.');
 
@@ -32,7 +32,7 @@ final class PatternBuilder {
         return String.format("%s (%s)", simpleClassName, containingPackage);
     }
 
-    static String buildPatternString(
+    public static String buildPatternString(
             String className, String methodName, List<String> parameterTypes, int parameterIndex) {
         String paramTypes =
                 parameterTypes.stream().map(type -> "\"" + type + "\"").collect(Collectors.joining(", "));

@@ -41,7 +41,13 @@ public interface Component {
     @JacksonXmlElementWrapper(useWrapping = false)
     List<Injection> injections();
 
+    /**
+     * Creates a component from a list of injections. Automatically merges injections with the same key
+     * (displayName, language, injectorId).
+     */
     static Component of(List<Injection> injections) {
-        return ImmutableComponent.builder().injections(injections).build();
+        return ImmutableComponent.builder()
+                .injections(Injection.mergeAll(injections))
+                .build();
     }
 }

@@ -16,6 +16,8 @@
 
 package com.palantir.gradle.idealanguageinjector.scan;
 
+import com.palantir.gradle.idealanguageinjector.ideaxml.Injection;
+import com.palantir.gradle.idealanguageinjector.ideaxml.PatternBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import org.objectweb.asm.ClassVisitor;
@@ -23,14 +25,14 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 public final class CollectingVisitor extends ClassVisitor {
-    private final List<LanguageInjectionPattern> findings = new ArrayList<>();
+    private final List<Injection> findings = new ArrayList<>();
     private ClassContext context;
 
     CollectingVisitor() {
         super(Opcodes.ASM9);
     }
 
-    List<LanguageInjectionPattern> getFindings() {
+    List<Injection> getFindings() {
         return List.copyOf(findings);
     }
 

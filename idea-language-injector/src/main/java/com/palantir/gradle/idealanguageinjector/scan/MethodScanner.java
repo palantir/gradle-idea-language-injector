@@ -16,6 +16,9 @@
 
 package com.palantir.gradle.idealanguageinjector.scan;
 
+import com.palantir.gradle.idealanguageinjector.ideaxml.Injection;
+import com.palantir.gradle.idealanguageinjector.ideaxml.PatternBuilder;
+import com.palantir.gradle.idealanguageinjector.ideaxml.Place;
 import com.palantir.gradle.idealanguageinjector.scan.CollectingVisitor.ClassContext;
 import java.util.Arrays;
 import java.util.List;
@@ -29,13 +32,13 @@ public final class MethodScanner extends MethodVisitor {
     private final ClassContext classContext;
     private final String methodName;
     private final List<String> parameterTypes;
-    private final Consumer<LanguageInjectionPattern> resultConsumer;
+    private final Consumer<Injection> resultConsumer;
 
     MethodScanner(
             ClassContext classContext,
             String methodName,
             String descriptor,
-            Consumer<LanguageInjectionPattern> resultConsumer) {
+            Consumer<Injection> resultConsumer) {
         super(Opcodes.ASM9);
         this.classContext = classContext;
         this.methodName = methodName;
@@ -63,11 +66,13 @@ public final class MethodScanner extends MethodVisitor {
             @Override
             public void visit(String name, Object value) {
                 if (name.equals("value") && value instanceof String language) {
-                    resultConsumer.accept(new LanguageInjectionPattern(
-                            PatternBuilder.buildPatternString(
-                                    classContext.className(), methodName, parameterTypes, parameter),
-                            classContext.displayName(),
-                            language));
+                    String pattern = PatternBuilder.buildPatternString(
+                            classContext.className(), methodName, parameterTypes, parameter);
+                    resultConsumer.accept(Injection.builder()
+                            .language(language)
+                            .displayName(classContext.displayName())
+                            .addPlaces(Place.of(pattern))
+                            .build());
                 }
             }
         };

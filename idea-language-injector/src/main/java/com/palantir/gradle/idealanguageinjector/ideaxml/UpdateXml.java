@@ -24,16 +24,11 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
-import com.palantir.gradle.idealanguageinjector.scan.LanguageInjectionPattern;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
@@ -69,24 +64,20 @@ public abstract class UpdateXml extends DefaultTask {
 
     @TaskAction
     public final void updateXml() {
-        List<LanguageInjectionPattern> LanguageInjectionPatterns = getArtifactFiles().getFiles().stream()
+        List<Injection> addedInjections = getArtifactFiles().getFiles().stream()
                 .flatMap(UpdateXml::findScanFiles)
-                .flatMap(UpdateXml::readAnnotationsFromFile)
+                .map(UpdateXml::readXml)
+                .flatMap(project -> project.component().injections().stream())
                 .toList();
 
         File outputFile = getOutputFile().get().getAsFile();
 
-        if (LanguageInjectionPatterns.isEmpty()) {
+        if (addedInjections.isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        List<Injection> addedInjections = toInjections(LanguageInjectionPatterns);
-        Project updatedXml = readXml(outputFile)
-                .map(existingProject -> mergeInjectionsIntoXml(existingProject, addedInjections))
-                .orElseGet(() -> createNewProject(addedInjections));
-
-        writeXml(outputFile, updatedXml);
+        writeXml(outputFile, createOrMergeProject(readXml(outputFile), addedInjections));
     }
 
     private static Stream<File> findScanFiles(File file) {
@@ -99,74 +90,24 @@ public abstract class UpdateXml extends DefaultTask {
                         : Stream.of(f).filter(f1 -> f1.getName().endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)));
     }
 
-    private static Stream<LanguageInjectionPattern> readAnnotationsFromFile(File dataFile) {
-        try {
-            return LanguageInjectionPattern.readFromFile(dataFile).stream();
-        } catch (IOException e) {
-            return Stream.empty();
-        }
-    }
-
-    private static Optional<Project> readXml(File outputFile) {
-        if (!outputFile.exists()) {
-            return Optional.empty();
+    private static Project readXml(File file) {
+        if (!file.exists()) {
+            return Project.empty();
         }
         try {
-            return Optional.ofNullable(XML_MAPPER.readValue(outputFile, Project.class));
+            return Optional.ofNullable(XML_MAPPER.readValue(file, Project.class))
+                    .orElseGet(Project::empty);
         } catch (IOException e) {
-            log.error("Failed to parse existing configuration file: {}", outputFile, e);
+            log.error("Failed to parse existing configuration file: {}", file, e);
+            return Project.empty();
         }
-        return Optional.empty();
     }
 
-    private static Project mergeInjectionsIntoXml(Project existingProject, List<Injection> newInjections) {
-
-        List<Injection> existingInjections = existingProject.component().injections();
-
-        // Use composite key: (displayName, language, injectorId)
-        Map<InjectionKey, Injection> mergedMap = Stream.concat(existingInjections.stream(), newInjections.stream())
-                .collect(Collectors.toMap(
-                        InjectionKey::from, injection -> injection, UpdateXml::mergeInjections, LinkedHashMap::new));
-
-        List<Injection> mergedInjections = mergedMap.values().stream()
-                .sorted(Comparator.comparing(Injection::displayName)
-                        .thenComparing(Injection::language)
-                        .thenComparing(Injection::injectorId))
-                .collect(Collectors.toList());
-
-        return Project.of(Component.of(mergedInjections), existingProject.version());
-    }
-
-    private static Injection mergeInjections(Injection existing, Injection replacement) {
-        // Combine places from both injections and remove duplicates
-        List<String> mergedPlaces = Stream.concat(existing.places().stream(), replacement.places().stream())
-                .map(Place::pattern)
-                .distinct()
-                .sorted()
+    private static Project createOrMergeProject(Project existing, List<Injection> newInjections) {
+        List<Injection> allInjections = Stream.concat(
+                        existing.component().injections().stream(), newInjections.stream())
                 .toList();
-
-        return Injection.builder()
-                .from(existing)
-                .places(mergedPlaces.stream().map(Place::of).collect(Collectors.toList()))
-                .build();
-    }
-
-    private static Project createNewProject(List<Injection> injections) {
-        // Merge injections with same composite key before creating project
-        Map<InjectionKey, Injection> mergedMap = injections.stream()
-                .collect(Collectors.toMap(
-                        InjectionKey::from, injection -> injection, UpdateXml::mergeInjections, LinkedHashMap::new));
-
-        List<Injection> sortedInjections = mergedMap.values().stream()
-                .sorted(Comparator.comparing(Injection::displayName)
-                        .thenComparing(Injection::language)
-                        .thenComparing(Injection::injectorId))
-                .collect(Collectors.toList());
-        return Project.of(Component.of(sortedInjections), "4");
-    }
-
-    private static List<Injection> toInjections(List<LanguageInjectionPattern> languageInjectionPatterns) {
-        return languageInjectionPatterns.stream().map(Injection::from).collect(Collectors.toList());
+        return Project.of(Component.of(allInjections), existing.version());
     }
 
     private void writeXml(File outputFile, Project updatedXml) {
@@ -178,12 +119,6 @@ public abstract class UpdateXml extends DefaultTask {
                     "Failed to write back to configuration file: "
                             + getOutputFile().get(),
                     e);
-        }
-    }
-
-    private record InjectionKey(String displayName, String language, String injectorId) {
-        static InjectionKey from(Injection injection) {
-            return new InjectionKey(injection.displayName(), injection.language(), injection.injectorId());
         }
     }
 }

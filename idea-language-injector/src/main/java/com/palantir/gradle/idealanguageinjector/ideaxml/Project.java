@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.List;
 import org.immutables.value.Value;
 
 /**
@@ -39,5 +40,9 @@ public interface Project {
 
     static Project of(Component component, String version) {
         return ImmutableProject.builder().component(component).version(version).build();
+    }
+
+    static Project empty() {
+        return Project.of(Component.of(List.of()), "4");
     }
 }

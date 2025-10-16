@@ -15,6 +15,16 @@
  */
 package com.palantir.gradle.idealanguageinjector.scan;
 
+import com.ctc.wstx.stax.WstxInputFactory;
+import com.ctc.wstx.stax.WstxOutputFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.palantir.gradle.idealanguageinjector.ideaxml.Component;
+import com.palantir.gradle.idealanguageinjector.ideaxml.Injection;
+import com.palantir.gradle.idealanguageinjector.ideaxml.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +43,12 @@ import org.gradle.api.provider.Provider;
 import org.objectweb.asm.ClassReader;
 
 public abstract class AnnotationScanTransform implements TransformAction<None> {
-    public static final String LANGUAGE_SCAN_FILE = "language-annotations.languagedata";
+    public static final String LANGUAGE_SCAN_FILE = "language-annotations.injections.xml";
+
+    private static final ObjectMapper XML_MAPPER = new XmlMapper(new WstxInputFactory(), new WstxOutputFactory())
+            .registerModule(new Jdk8Module())
+            .registerModule(new GuavaModule())
+            .enable(SerializationFeature.INDENT_OUTPUT);
 
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
@@ -44,14 +59,14 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
     @Override
     public final void transform(TransformOutputs outputs) {
         File jarFile = getInputArtifact().get().getAsFile();
-        List<LanguageInjectionPattern> annotations = scanJarForAnnotations(jarFile);
+        List<Injection> injections = scanJarForInjections(jarFile);
 
-        if (!annotations.isEmpty()) {
-            writeAnnotationFile(outputs, jarFile, annotations);
+        if (!injections.isEmpty()) {
+            writeAnnotationFile(outputs, jarFile, injections);
         }
     }
 
-    private List<LanguageInjectionPattern> scanJarForAnnotations(File jarFile) {
+    private List<Injection> scanJarForInjections(File jarFile) {
         try (ZipFile zip = new ZipFile(jarFile)) {
             return zip.stream()
                     .filter(AnnotationScanTransform::isClassFile)
@@ -66,7 +81,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         return !entry.isDirectory() && entry.getName().endsWith(".class");
     }
 
-    public static Stream<LanguageInjectionPattern> scanClass(ZipFile zip, ZipEntry entry) {
+    public static Stream<Injection> scanClass(ZipFile zip, ZipEntry entry) {
         try (InputStream input = zip.getInputStream(entry)) {
             CollectingVisitor visitor = new CollectingVisitor();
             new ClassReader(input)
@@ -77,11 +92,11 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         }
     }
 
-    private void writeAnnotationFile(
-            TransformOutputs outputs, File jarFile, List<LanguageInjectionPattern> annotations) {
+    private void writeAnnotationFile(TransformOutputs outputs, File jarFile, List<Injection> injections) {
         try {
-            LanguageInjectionPattern.writeToFile(
-                    annotations, outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE));
+            Project component = Project.of(Component.of(injections), "4");
+            XML_MAPPER.writeValue(
+                    outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE), component);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write language annotation data", e);
         }

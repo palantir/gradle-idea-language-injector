@@ -20,8 +20,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.palantir.gradle.idealanguageinjector.scan.LanguageInjectionPattern;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.immutables.value.Value;
 
 /**
@@ -58,11 +62,44 @@ public interface Injection {
         return ImmutableInjection.builder();
     }
 
-    static Injection from(LanguageInjectionPattern info) {
+    /**
+     * Merges multiple injections, combining injections with the same key (displayName, language, injectorId).
+     */
+    static List<Injection> mergeAll(List<Injection> injections) {
+        Map<InjectionKey, Injection> mergedMap = injections.stream()
+                .collect(Collectors.toMap(
+                        InjectionKey::from, injection -> injection, Injection::mergeTwo, LinkedHashMap::new));
+
+        return mergedMap.values().stream()
+                .sorted(Comparator.comparing(Injection::displayName)
+                        .thenComparing(Injection::language)
+                        .thenComparing(Injection::injectorId))
+                .collect(Collectors.toList());
+    }
+
+    private static Injection mergeTwo(Injection existing, Injection replacement) {
+        return existing.mergeWith(replacement);
+    }
+
+    /**
+     * Merges two injections by combining their places.
+     */
+    default Injection mergeWith(Injection other) {
+        List<String> mergedPlaces = Stream.concat(this.places().stream(), other.places().stream())
+                .map(Place::pattern)
+                .distinct()
+                .sorted()
+                .toList();
+
         return builder()
-                .language(info.language())
-                .displayName(info.displayName())
-                .addPlaces(Place.of(info.pattern()))
+                .from(this)
+                .places(mergedPlaces.stream().map(Place::of).collect(Collectors.toList()))
                 .build();
+    }
+
+    record InjectionKey(String displayName, String language, String injectorId) {
+        static InjectionKey from(Injection injection) {
+            return new InjectionKey(injection.displayName(), injection.language(), injection.injectorId());
+        }
     }
 }
