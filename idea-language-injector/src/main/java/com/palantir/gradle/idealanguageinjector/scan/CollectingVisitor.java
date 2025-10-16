@@ -17,7 +17,6 @@
 package com.palantir.gradle.idealanguageinjector.scan;
 
 import com.palantir.gradle.idealanguageinjector.ideaxml.Injection;
-import com.palantir.gradle.idealanguageinjector.ideaxml.PatternBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import org.objectweb.asm.ClassVisitor;
@@ -38,7 +37,7 @@ public final class CollectingVisitor extends ClassVisitor {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        this.context = ClassContext.of(name.replace('/', '.'), false);
+        this.context = new ClassContext(name.replace('/', '.'), false);
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
@@ -46,7 +45,7 @@ public final class CollectingVisitor extends ClassVisitor {
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
         if (name.replace('/', '.').equals(context.className())) {
             boolean isNonStatic = (access & Opcodes.ACC_STATIC) == 0;
-            this.context = ClassContext.of(context.className(), isNonStatic);
+            this.context = new ClassContext(context.className(), isNonStatic);
         }
         super.visitInnerClass(name, outerName, innerName, access);
     }
@@ -57,9 +56,5 @@ public final class CollectingVisitor extends ClassVisitor {
         return new MethodScanner(context, name, descriptor, findings::add);
     }
 
-    public record ClassContext(String className, boolean isNonStaticInnerClass, String displayName) {
-        static ClassContext of(String className, boolean isNonStaticInnerClass) {
-            return new ClassContext(className, isNonStaticInnerClass, PatternBuilder.buildDisplayName(className));
-        }
-    }
+    public record ClassContext(String className, boolean isNonStaticInnerClass){}
 }

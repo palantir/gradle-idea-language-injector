@@ -62,6 +62,15 @@ public interface Injection {
         return ImmutableInjection.builder();
     }
 
+    static Injection from(
+            String className, String methodName, List<String> parameterTypes, int parameterIndex, String language) {
+        return builder()
+                .language(language)
+                .displayName(PatternBuilder.buildDisplayName(className))
+                .addPlaces(Place.from(className, methodName, parameterTypes, parameterIndex))
+                .build();
+    }
+
     /**
      * Merges multiple injections, combining injections with the same key (displayName, language, injectorId).
      */

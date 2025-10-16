@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlCData;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
+import java.util.List;
 import org.immutables.value.Value;
 
 /**
@@ -36,5 +37,11 @@ public interface Place {
 
     static Place of(String pattern) {
         return ImmutablePlace.builder().pattern(pattern).build();
+    }
+
+    static Place from(String className, String methodName, List<String> parameterTypes, int parameterIndex) {
+        return ImmutablePlace.builder()
+                .pattern(PatternBuilder.buildPatternString(className, methodName, parameterTypes, parameterIndex))
+                .build();
     }
 }
