@@ -69,7 +69,7 @@ class IdeaLanguageInjectorTest {
         // Setup build file
         rootProject
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -169,7 +169,7 @@ class IdeaLanguageInjectorTest {
 
         subProject
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -235,7 +235,7 @@ class IdeaLanguageInjectorTest {
     void handles_subproject_without_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -255,7 +255,7 @@ class IdeaLanguageInjectorTest {
 
         subProject1
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -274,7 +274,7 @@ class IdeaLanguageInjectorTest {
 
         subProject2
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -296,7 +296,7 @@ class IdeaLanguageInjectorTest {
         rootProject.buildGradle().appendLine("dependencies { implementation '" + simpleLib + "' }");
         subProject
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
@@ -327,7 +327,7 @@ class IdeaLanguageInjectorTest {
 
         subProject
                 .buildGradle()
-                .overwrite(
+                .append(
                         """
                         plugins {
                             id 'java'
