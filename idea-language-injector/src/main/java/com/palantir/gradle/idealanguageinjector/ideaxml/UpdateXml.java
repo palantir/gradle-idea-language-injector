@@ -70,12 +70,9 @@ public abstract class UpdateXml extends DefaultTask {
     }
 
     private static Stream<File> findScanFiles(File file) {
-        return Stream.of(file)
-                .flatMap(f -> f.isDirectory()
-                        ? Optional.ofNullable(f.listFiles(
-                                        (_dir, name) -> name.endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)))
-                                .stream()
-                                .flatMap(Stream::of)
-                        : Stream.of(f).filter(f1 -> f1.getName().endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)));
+        return Optional.ofNullable(
+                        file.listFiles((_dir, name) -> name.endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)))
+                .stream()
+                .flatMap(Stream::of);
     }
 }

@@ -49,11 +49,13 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         File jarFile = getInputArtifact().get().getAsFile();
         List<Injection> injections = scanJarForInjections(jarFile);
 
-        if (!injections.isEmpty()) {
-            IntelliLangXml.write(
-                    outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE),
-                    Project.of(Component.of(injections)));
+        if (injections.isEmpty()) {
+            return;
         }
+
+        IntelliLangXml.write(
+                outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE),
+                Project.of(Component.of(injections)));
     }
 
     private List<Injection> scanJarForInjections(File jarFile) {

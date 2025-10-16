@@ -59,10 +59,12 @@ public final class MethodScanner extends MethodVisitor {
         return new AnnotationVisitor(Opcodes.ASM9) {
             @Override
             public void visit(String name, Object value) {
-                if (name.equals("value") && value instanceof String language) {
-                    resultConsumer.accept(Injection.from(
-                            classContext.className(), methodName, parameterTypes, parameter, language));
+                if (!(name.equals("value") && value instanceof String language)) {
+                    return;
                 }
+
+                resultConsumer.accept(
+                        Injection.from(classContext.className(), methodName, parameterTypes, parameter, language));
             }
         };
     }
