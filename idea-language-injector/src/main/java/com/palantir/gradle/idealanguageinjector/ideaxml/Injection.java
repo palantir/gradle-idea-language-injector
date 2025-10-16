@@ -66,28 +66,37 @@ public interface Injection {
             String className, String methodName, List<String> parameterTypes, int parameterIndex, String language) {
         return builder()
                 .language(language)
-                .displayName(PatternBuilder.buildDisplayName(className))
+                .displayName(buildDisplayName(className))
                 .addPlaces(Place.from(className, methodName, parameterTypes, parameterIndex))
                 .build();
+    }
+
+    static String buildDisplayName(String className) {
+        String normalizedClassName = className.replace('$', '.');
+        int lastDot = normalizedClassName.lastIndexOf('.');
+
+        String simpleClassName = normalizedClassName.substring(lastDot + 1);
+        String containingPackage = lastDot > 0 ? normalizedClassName.substring(0, lastDot) : "";
+
+        return String.format("%s (%s)", simpleClassName, containingPackage);
     }
 
     /**
      * Merges multiple injections, combining injections with the same key (displayName, language, injectorId).
      */
     static List<Injection> mergeAll(List<Injection> injections) {
-        Map<InjectionKey, Injection> mergedMap = injections.stream()
+        Map<String, Injection> mergedMap = injections.stream()
                 .collect(Collectors.toMap(
-                        InjectionKey::from, injection -> injection, Injection::mergeTwo, LinkedHashMap::new));
+                        i -> i.displayName() + "|" + i.language() + "|" + i.injectorId(),
+                        injection -> injection,
+                        Injection::mergeWith,
+                        LinkedHashMap::new));
 
         return mergedMap.values().stream()
                 .sorted(Comparator.comparing(Injection::displayName)
                         .thenComparing(Injection::language)
                         .thenComparing(Injection::injectorId))
-                .collect(Collectors.toList());
-    }
-
-    private static Injection mergeTwo(Injection existing, Injection replacement) {
-        return existing.mergeWith(replacement);
+                .toList();
     }
 
     /**
@@ -102,13 +111,7 @@ public interface Injection {
 
         return builder()
                 .from(this)
-                .places(mergedPlaces.stream().map(Place::of).collect(Collectors.toList()))
+                .places(mergedPlaces.stream().map(Place::of).toList())
                 .build();
-    }
-
-    record InjectionKey(String displayName, String language, String injectorId) {
-        static InjectionKey from(Injection injection) {
-            return new InjectionKey(injection.displayName(), injection.language(), injection.injectorId());
-        }
     }
 }

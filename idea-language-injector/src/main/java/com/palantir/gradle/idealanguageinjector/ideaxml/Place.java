@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlCData;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.immutables.value.Value;
 
 /**
@@ -41,7 +42,28 @@ public interface Place {
 
     static Place from(String className, String methodName, List<String> parameterTypes, int parameterIndex) {
         return ImmutablePlace.builder()
-                .pattern(PatternBuilder.buildPatternString(className, methodName, parameterTypes, parameterIndex))
+                .pattern(buildPatternString(className, methodName, parameterTypes, parameterIndex))
                 .build();
+    }
+
+    static String buildPatternString(
+            String className, String methodName, List<String> parameterTypes, int parameterIndex) {
+        String paramTypes =
+                parameterTypes.stream().map(type -> "\"" + type + "\"").collect(Collectors.joining(", "));
+
+        String patternMethodName = methodName.equals("<init>") ? extractSimpleClassName(className) : methodName;
+
+        String normalizedClassName = className.replace('$', '.');
+
+        return String.format(
+                "psiParameter().ofMethod(%d, psiMethod().withName(\"%s\").withParameters(%s).definedInClass(\"%s\"))",
+                parameterIndex, patternMethodName, paramTypes, normalizedClassName);
+    }
+
+    private static String extractSimpleClassName(String className) {
+        int lastDot = className.lastIndexOf('.');
+        int lastDollar = className.lastIndexOf('$');
+        int lastDelimiter = Math.max(lastDot, lastDollar);
+        return className.substring(lastDelimiter + 1);
     }
 }
