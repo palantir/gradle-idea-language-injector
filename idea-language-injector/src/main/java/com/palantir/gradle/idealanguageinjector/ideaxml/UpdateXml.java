@@ -39,21 +39,21 @@ public abstract class UpdateXml extends DefaultTask {
     public abstract ConfigurableFileCollection getArtifactFiles();
 
     @OutputFile
-    public abstract RegularFileProperty getIntelliLang();
+    public abstract RegularFileProperty getIntelliLangFile();
 
     @Inject
     protected abstract ProjectLayout getProjectLayout();
 
     public UpdateXml() {
-        getIntelliLang().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
+        getIntelliLangFile().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
     }
 
     @TaskAction
     public final void updateXml() {
-        File intelliLang = getIntelliLang().get().getAsFile();
+        File intelliLangFile = getIntelliLangFile().get().getAsFile();
 
         List<Project> allProjects = Stream.concat(
-                        Stream.of(IntelliLangXml.read(intelliLang)),
+                        Stream.of(IntelliLangXml.read(intelliLangFile)),
                         getArtifactFiles().getFiles().stream()
                                 .flatMap(UpdateXml::findScanFiles)
                                 .map(IntelliLangXml::read))
@@ -66,7 +66,7 @@ public abstract class UpdateXml extends DefaultTask {
             return;
         }
 
-        IntelliLangXml.write(intelliLang, merged);
+        IntelliLangXml.write(intelliLangFile, merged);
     }
 
     private static Stream<File> findScanFiles(File file) {
