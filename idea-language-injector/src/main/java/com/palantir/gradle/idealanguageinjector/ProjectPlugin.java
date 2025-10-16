@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
-import com.palantir.gradle.idealanguageinjector.scan.ScanTransform;
+import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
@@ -60,7 +60,7 @@ public final class ProjectPlugin implements Plugin<Project> {
     }
 
     private static void registerTransform(Project project) {
-        project.getDependencies().registerTransform(ScanTransform.class, spec -> {
+        project.getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
             spec.getFrom()
                     .attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
                     .attribute(HAS_LANGUAGE_ANNOTATION, true);

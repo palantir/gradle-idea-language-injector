@@ -24,7 +24,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationInfo;
-import com.palantir.gradle.idealanguageinjector.scan.ScanTransform;
+import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -93,10 +93,10 @@ public abstract class UpdateXml extends DefaultTask {
         return Stream.of(file)
                 .flatMap(f -> f.isDirectory()
                         ? Optional.ofNullable(f.listFiles(
-                                        (_dir, name) -> name.endsWith(ScanTransform.LANGUAGE_SCAN_FILE)))
+                                        (_dir, name) -> name.endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)))
                                 .stream()
                                 .flatMap(Stream::of)
-                        : Stream.of(f).filter(f1 -> f1.getName().endsWith(ScanTransform.LANGUAGE_SCAN_FILE)));
+                        : Stream.of(f).filter(f1 -> f1.getName().endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)));
     }
 
     private static Stream<AnnotationInfo> readAnnotationsFromFile(File dataFile) {
@@ -119,20 +119,14 @@ public abstract class UpdateXml extends DefaultTask {
         return Optional.empty();
     }
 
-    private static Project mergeInjectionsIntoXml(
-            Project existingProject, List<Injection> newInjections) {
+    private static Project mergeInjectionsIntoXml(Project existingProject, List<Injection> newInjections) {
 
-        List<Injection> existingInjections =
-                existingProject.component().injections();
+        List<Injection> existingInjections = existingProject.component().injections();
 
         // Use composite key: (displayName, language, injectorId)
-        Map<InjectionKey, Injection> mergedMap = Stream.concat(
-                        existingInjections.stream(), newInjections.stream())
+        Map<InjectionKey, Injection> mergedMap = Stream.concat(existingInjections.stream(), newInjections.stream())
                 .collect(Collectors.toMap(
-                        InjectionKey::from,
-                        injection -> injection,
-                        UpdateXml::mergeInjections,
-                        LinkedHashMap::new));
+                        InjectionKey::from, injection -> injection, UpdateXml::mergeInjections, LinkedHashMap::new));
 
         List<Injection> mergedInjections = mergedMap.values().stream()
                 .sorted(Comparator.comparing(Injection::displayName)
@@ -143,8 +137,7 @@ public abstract class UpdateXml extends DefaultTask {
         return Project.of(Component.of(mergedInjections), existingProject.version());
     }
 
-    private static Injection mergeInjections(
-            Injection existing, Injection replacement) {
+    private static Injection mergeInjections(Injection existing, Injection replacement) {
         // Combine places from both injections and remove duplicates
         List<String> mergedPlaces = Stream.concat(existing.places().stream(), replacement.places().stream())
                 .map(Place::pattern)
@@ -162,10 +155,7 @@ public abstract class UpdateXml extends DefaultTask {
         // Merge injections with same composite key before creating project
         Map<InjectionKey, Injection> mergedMap = injections.stream()
                 .collect(Collectors.toMap(
-                        InjectionKey::from,
-                        injection -> injection,
-                        UpdateXml::mergeInjections,
-                        LinkedHashMap::new));
+                        InjectionKey::from, injection -> injection, UpdateXml::mergeInjections, LinkedHashMap::new));
 
         List<Injection> sortedInjections = mergedMap.values().stream()
                 .sorted(Comparator.comparing(Injection::displayName)

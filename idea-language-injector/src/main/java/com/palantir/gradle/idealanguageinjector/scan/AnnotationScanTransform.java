@@ -18,7 +18,6 @@ package com.palantir.gradle.idealanguageinjector.scan;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -32,14 +31,14 @@ import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
 import org.objectweb.asm.ClassReader;
 
-public abstract class ScanTransform implements TransformAction<None> {
+public abstract class AnnotationScanTransform implements TransformAction<None> {
     public static final String LANGUAGE_SCAN_FILE = "language-annotations.languagedata";
 
     @InputArtifact
     public abstract Provider<FileSystemLocation> getInputArtifact();
 
     @Inject
-    public ScanTransform() {}
+    public AnnotationScanTransform() {}
 
     @Override
     public final void transform(TransformOutputs outputs) {
@@ -54,7 +53,7 @@ public abstract class ScanTransform implements TransformAction<None> {
     private List<AnnotationInfo> scanJarForAnnotations(File jarFile) {
         try (ZipFile zip = new ZipFile(jarFile)) {
             return zip.stream()
-                    .filter(ScanTransform::isClassFile)
+                    .filter(AnnotationScanTransform::isClassFile)
                     .flatMap(entry -> scanClassEntry(zip, entry).stream())
                     .toList();
         } catch (IOException e) {
@@ -68,12 +67,10 @@ public abstract class ScanTransform implements TransformAction<None> {
 
     private List<AnnotationInfo> scanClassEntry(ZipFile zip, ZipEntry entry) {
         try (InputStream input = zip.getInputStream(entry)) {
-            List<AnnotationInfo> findings = new ArrayList<>();
+            AnnotationScanner scanner = new AnnotationScanner();
             new ClassReader(input)
-                    .accept(
-                            new AnnotationScanner(findings),
-                            ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-            return findings;
+                    .accept(scanner, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            return scanner.getFindings();
         } catch (IOException e) {
             return List.of();
         }
