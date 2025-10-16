@@ -40,8 +40,7 @@ public class InjectionMergeTest {
         Injection merged = injection1.mergeWith(injection2);
 
         assertThat(merged.places()).hasSize(2);
-        assertThat(merged.places().stream().map(Place::pattern))
-                .containsExactlyInAnyOrder("pattern1", "pattern2");
+        assertThat(merged.places().stream().map(Place::pattern)).containsExactlyInAnyOrder("pattern1", "pattern2");
     }
 
     @Test

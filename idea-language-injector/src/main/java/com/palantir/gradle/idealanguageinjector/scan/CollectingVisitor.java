@@ -56,5 +56,5 @@ public final class CollectingVisitor extends ClassVisitor {
         return new MethodScanner(context, name, descriptor, findings::add);
     }
 
-    public record ClassContext(String className, boolean isNonStaticInnerClass){}
+    public record ClassContext(String className, boolean isNonStaticInnerClass) {}
 }
