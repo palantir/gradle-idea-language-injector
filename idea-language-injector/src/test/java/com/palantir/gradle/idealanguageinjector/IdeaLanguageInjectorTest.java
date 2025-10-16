@@ -355,14 +355,17 @@ class IdeaLanguageInjectorTest {
         Path binDir = tempDir.resolve("bin");
         Files.createDirectories(binDir);
 
-        // Write source files
+        // Compile sources
         List<File> sources = new ArrayList<>();
         for (String fileName : resourceFiles) {
             String content = readResource("/test-libraries/" + fileName);
-            Path path = srcDir.resolve(extractPackagePath(content)).resolve(fileName);
-            Files.createDirectories(path.getParent());
-            Files.writeString(path, content);
-            sources.add(path.toFile());
+            Matcher pkgMatcher = Pattern.compile("package\\s+([\\w.]+);").matcher(content);
+            String pkgPath = pkgMatcher.find() ? pkgMatcher.group(1).replace('.', '/') : "";
+
+            Path srcFile = srcDir.resolve(pkgPath).resolve(fileName);
+            Files.createDirectories(srcFile.getParent());
+            Files.writeString(srcFile, content);
+            sources.add(srcFile.toFile());
         }
 
         // Compile
@@ -379,8 +382,8 @@ class IdeaLanguageInjectorTest {
                     .call();
         }
 
-        // Package JAR
-        Path repoDir = localRepo.resolve("com/example").resolve(artifact).resolve("1.0.0");
+        // Create JAR and POM
+        Path repoDir = localRepo.resolve("com/example/" + artifact + "/1.0.0");
         Files.createDirectories(repoDir);
 
         try (JarOutputStream jar =
@@ -395,26 +398,22 @@ class IdeaLanguageInjectorTest {
 
         Files.writeString(
                 repoDir.resolve(artifact + "-1.0.0.pom"),
-                String.format(
-                        """
-                        <?xml version="1.0"?>
-                        <project><modelVersion>4.0.0</modelVersion>
-                          <groupId>%s</groupId><artifactId>%s</artifactId><version>1.0.0</version>
-                        </project>""",
-                        "com.example", artifact));
+                // language=xml
+                """
+                <?xml version="1.0"?>
+                <project><modelVersion>4.0.0</modelVersion>
+                  <groupId>com.example</groupId><artifactId>%s</artifactId><version>1.0.0</version>
+                </project>
+                """
+                        .formatted(artifact));
 
-        return "com.example" + ":" + artifact + ":1.0.0";
+        return "com.example:" + artifact + ":1.0.0";
     }
 
     private static String readResource(String path) throws IOException {
         try (InputStream is = IdeaLanguageInjectorTest.class.getResourceAsStream(path)) {
-            Assertions.assertNotNull(is);
+            Assertions.assertNotNull(is, "Resource not found: " + path);
             return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
-    }
-
-    private static String extractPackagePath(String content) {
-        Matcher matcher = Pattern.compile("package\\s+([\\w.]+);").matcher(content);
-        return matcher.find() ? matcher.group(1).replace('.', '/') : "";
     }
 }
