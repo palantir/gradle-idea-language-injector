@@ -38,9 +38,6 @@ public interface Project {
     Component component();
 
     static Project of(Component component, String version) {
-        return ImmutableProject.builder()
-                .component(component)
-                .version(version)
-                .build();
+        return ImmutableProject.builder().component(component).version(version).build();
     }
 }

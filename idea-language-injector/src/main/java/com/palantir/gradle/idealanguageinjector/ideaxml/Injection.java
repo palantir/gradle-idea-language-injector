@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.palantir.gradle.idealanguageinjector.scan.AnnotationInfo;
+import com.palantir.gradle.idealanguageinjector.scan.LanguageInjectionPattern;
 import java.util.List;
 import org.immutables.value.Value;
 
@@ -58,9 +58,9 @@ public interface Injection {
         return ImmutableInjection.builder();
     }
 
-    static Injection from(AnnotationInfo info) {
+    static Injection from(LanguageInjectionPattern info) {
         return builder()
-                .language(info.languageValue())
+                .language(info.language())
                 .displayName(info.displayName())
                 .addPlaces(Place.of(info.pattern()))
                 .build();

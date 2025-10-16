@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.palantir.gradle.idealanguageinjector.scan.AnnotationInfo;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
+import com.palantir.gradle.idealanguageinjector.scan.LanguageInjectionPattern;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -69,19 +69,19 @@ public abstract class UpdateXml extends DefaultTask {
 
     @TaskAction
     public final void updateXml() {
-        List<AnnotationInfo> annotationInfos = getArtifactFiles().getFiles().stream()
+        List<LanguageInjectionPattern> LanguageInjectionPatterns = getArtifactFiles().getFiles().stream()
                 .flatMap(UpdateXml::findScanFiles)
                 .flatMap(UpdateXml::readAnnotationsFromFile)
                 .toList();
 
         File outputFile = getOutputFile().get().getAsFile();
 
-        if (annotationInfos.isEmpty()) {
+        if (LanguageInjectionPatterns.isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        List<Injection> addedInjections = toInjections(annotationInfos);
+        List<Injection> addedInjections = toInjections(LanguageInjectionPatterns);
         Project updatedXml = readXml(outputFile)
                 .map(existingProject -> mergeInjectionsIntoXml(existingProject, addedInjections))
                 .orElseGet(() -> createNewProject(addedInjections));
@@ -99,9 +99,9 @@ public abstract class UpdateXml extends DefaultTask {
                         : Stream.of(f).filter(f1 -> f1.getName().endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)));
     }
 
-    private static Stream<AnnotationInfo> readAnnotationsFromFile(File dataFile) {
+    private static Stream<LanguageInjectionPattern> readAnnotationsFromFile(File dataFile) {
         try {
-            return AnnotationInfo.readFromFile(dataFile).stream();
+            return LanguageInjectionPattern.readFromFile(dataFile).stream();
         } catch (IOException e) {
             return Stream.empty();
         }
@@ -165,8 +165,8 @@ public abstract class UpdateXml extends DefaultTask {
         return Project.of(Component.of(sortedInjections), "4");
     }
 
-    private static List<Injection> toInjections(List<AnnotationInfo> annotationInfos) {
-        return annotationInfos.stream().map(Injection::from).collect(Collectors.toList());
+    private static List<Injection> toInjections(List<LanguageInjectionPattern> LanguageInjectionPatterns) {
+        return LanguageInjectionPatterns.stream().map(Injection::from).collect(Collectors.toList());
     }
 
     private void writeXml(File outputFile, Project updatedXml) {
