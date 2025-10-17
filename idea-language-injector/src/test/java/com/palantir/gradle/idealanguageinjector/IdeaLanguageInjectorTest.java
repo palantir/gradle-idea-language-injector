@@ -56,35 +56,27 @@ class IdeaLanguageInjectorTest {
 
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
 
-        rootProject
-                .settingsGradle()
-                .edit(content ->
-                        """
-                        plugins {
-                            id 'com.palantir.idea-language-injector'
-                        }
-                        """
-                                + content);
+        rootProject.settingsGradle().edit(content -> """
+            plugins {
+                id 'com.palantir.idea-language-injector'
+            }
+            """ + content);
 
         // Setup build file
-        rootProject
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
+        rootProject.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
 
-                        repositories {
-                            maven { url = uri('%s') }
-                            mavenCentral()
-                        }
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
 
-                        dependencies {
-                            implementation 'org.jetbrains:annotations:24.0.1'
-                        }
-                        """
-                                .formatted(localRepo.toUri()));
+            dependencies {
+                implementation 'org.jetbrains:annotations:24.0.1'
+            }
+            """.formatted(localRepo.toUri()));
     }
 
     @Test
@@ -107,56 +99,54 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         // language=xml
-        String expected =
-                """
-                <project version="4">
-                  <component name="LanguageInjectionConfiguration">
-                    <injection language="HTML" injector-id="java">
-                      <display-name>ComplexLib (com.example.complex)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeStatic").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                    </injection>
-                    <injection language="JSON" injector-id="java">
-                      <display-name>ComplexLib (com.example.complex)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("ComplexLib").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("process").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("process").withParameters("java.lang.String", "int").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                    </injection>
-                    <injection language="SQL" injector-id="java">
-                      <display-name>ComplexLib (com.example.complex)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryVarargs").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                    </injection>
-                    <injection language="XML" injector-id="java">
-                      <display-name>ComplexLib (com.example.complex)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryWithArray").withParameters("java.lang.String", "int[]").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryWithList").withParameters("java.lang.String", "java.util.List").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("ComplexLib").withParameters("int", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
-                    </injection>
-                    <injection language="HTML" injector-id="java">
-                      <display-name>Inner (com.example.complex.ComplexLib)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("Inner").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Inner"))]]></place>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("render").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Inner"))]]></place>
-                    </injection>
-                    <injection language="JSON" injector-id="java">
-                      <display-name>Nested (com.example.complex.ComplexLib)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("Nested").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Nested"))]]></place>
-                    </injection>
-                    <injection language="XML" injector-id="java">
-                      <display-name>Nested (com.example.complex.ComplexLib)</display-name>
-                      <single-file value="false"/>
-                      <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Nested"))]]></place>
-                    </injection>
-                  </component>
-                </project>
-                """
-                        .trim();
+        String expected = """
+            <project version="4">
+              <component name="LanguageInjectionConfiguration">
+                <injection language="HTML" injector-id="java">
+                  <display-name>ComplexLib (com.example.complex)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("executeStatic").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                </injection>
+                <injection language="JSON" injector-id="java">
+                  <display-name>ComplexLib (com.example.complex)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("ComplexLib").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("process").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("process").withParameters("java.lang.String", "int").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                </injection>
+                <injection language="SQL" injector-id="java">
+                  <display-name>ComplexLib (com.example.complex)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryVarargs").withParameters("java.lang.String", "java.lang.Object[]").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("execute").withParameters("java.lang.String", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                </injection>
+                <injection language="XML" injector-id="java">
+                  <display-name>ComplexLib (com.example.complex)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryWithArray").withParameters("java.lang.String", "int[]").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("queryWithList").withParameters("java.lang.String", "java.util.List").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("ComplexLib").withParameters("int", "java.lang.String").definedInClass("com.example.complex.ComplexLib"))]]></place>
+                </injection>
+                <injection language="HTML" injector-id="java">
+                  <display-name>Inner (com.example.complex.ComplexLib)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("Inner").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Inner"))]]></place>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("render").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Inner"))]]></place>
+                </injection>
+                <injection language="JSON" injector-id="java">
+                  <display-name>Nested (com.example.complex.ComplexLib)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("Nested").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Nested"))]]></place>
+                </injection>
+                <injection language="XML" injector-id="java">
+                  <display-name>Nested (com.example.complex.ComplexLib)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("compile").withParameters("java.lang.String").definedInClass("com.example.complex.ComplexLib.Nested"))]]></place>
+                </injection>
+              </component>
+            </project>
+            """.trim();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text().trim();
         assertThat(actual).isEqualTo(expected);
@@ -167,24 +157,20 @@ class IdeaLanguageInjectorTest {
             throws IOException {
         String library = publishLibrary("simple-lib", "SimpleLib.java");
 
-        subProject
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
+        subProject.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
 
-                        repositories {
-                            maven { url = uri('%s') }
-                            mavenCentral()
-                        }
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
 
-                        dependencies {
-                            implementation '%s'
-                        }
-                        """
-                                .formatted(localRepo.toUri(), library));
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(localRepo.toUri(), library));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -213,16 +199,12 @@ class IdeaLanguageInjectorTest {
         String simpleLib = publishLibrary("simple-lib", "SimpleLib.java");
         String complexLib = publishLibrary("complex-lib", "ComplexLib.java");
 
-        rootProject
-                .buildGradle()
-                .append(
-                        """
-                        dependencies {
-                            implementation '%s'
-                            implementation '%s'
-                        }
-                        """
-                                .formatted(simpleLib, complexLib));
+        rootProject.buildGradle().append("""
+            dependencies {
+                implementation '%s'
+                implementation '%s'
+            }
+            """.formatted(simpleLib, complexLib));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -233,14 +215,11 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_subproject_without_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        subProject
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
-                        """);
+        subProject.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
+            """);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -253,33 +232,26 @@ class IdeaLanguageInjectorTest {
             throws IOException {
         String library = publishLibrary("simple-lib", "SimpleLib.java");
 
-        subProject1
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
+        subProject1.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
 
-                        repositories {
-                            maven { url = uri('%s') }
-                            mavenCentral()
-                        }
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
 
-                        dependencies {
-                            implementation '%s'
-                        }
-                        """
-                                .formatted(localRepo.toUri(), library));
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(localRepo.toUri(), library));
 
-        subProject2
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
-                        """);
+        subProject2.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
+            """);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -294,24 +266,20 @@ class IdeaLanguageInjectorTest {
         String complexLib = publishLibrary("complex-lib", "ComplexLib.java");
 
         rootProject.buildGradle().appendLine("dependencies { implementation '" + simpleLib + "' }");
-        subProject
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
+        subProject.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
 
-                        repositories {
-                            maven { url = uri('%s') }
-                            mavenCentral()
-                        }
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
 
-                        dependencies {
-                            implementation '%s'
-                        }
-                        """
-                                .formatted(localRepo.toUri(), complexLib));
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(localRepo.toUri(), complexLib));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -325,24 +293,20 @@ class IdeaLanguageInjectorTest {
             GradleInvoker gradle, RootProject rootProject, SubProject subProject) throws IOException {
         String library = publishLibrary("no-annotations", "NoAnnotations.java");
 
-        subProject
-                .buildGradle()
-                .append(
-                        """
-                        plugins {
-                            id 'java'
-                        }
+        subProject.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
 
-                        repositories {
-                            maven { url = uri('%s') }
-                            mavenCentral()
-                        }
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
 
-                        dependencies {
-                            implementation '%s'
-                        }
-                        """
-                                .formatted(localRepo.toUri(), library));
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(localRepo.toUri(), library));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -404,8 +368,7 @@ class IdeaLanguageInjectorTest {
                 <project><modelVersion>4.0.0</modelVersion>
                   <groupId>com.example</groupId><artifactId>%s</artifactId><version>1.0.0</version>
                 </project>
-                """
-                        .formatted(artifact));
+                """.formatted(artifact));
 
         return "com.example:" + artifact + ":1.0.0";
     }
