@@ -21,7 +21,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
-import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.plugins.JavaPlugin;
@@ -76,9 +75,13 @@ public final class ProjectPlugin implements Plugin<Project> {
                 task.from(project.getConfigurations()
                         .named(sourceSet.getCompileClasspathConfigurationName())
                         .map(conf -> conf.getIncoming()
-                                .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, LANGUAGE_ANNOTATION_SCANS)))
+                                .artifactView(view -> {
+                                    view.lenient(true);
+                                    view.attributes(attrs -> attrs.attribute(
+                                            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, LANGUAGE_ANNOTATION_SCANS));
+                                })
                                 .getFiles()));
+                task.onlyIf(_t -> !task.getSource().isEmpty());
             });
 
             DirectoryProperty outputDir = project.getObjects().directoryProperty();
@@ -88,19 +91,12 @@ public final class ProjectPlugin implements Plugin<Project> {
     }
 
     private static void createOutgoingConfiguration(Project project, TaskProvider<Sync> collectTask) {
-        project.getConfigurations().register(LANGUAGE_ANNOTATION_SCANS, outgoing -> {
-            outgoing.setCanBeConsumed(true);
-            outgoing.setCanBeResolved(false);
-            outgoing.setDescription("Provides language scan artifacts for IntelliJ language injection");
-
+        project.getConfigurations().consumable(LANGUAGE_ANNOTATION_SCANS, outgoing -> {
             outgoing.attributes(attrs -> {
                 attrs.attribute(
                         Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_ANNOTATION_SCANS));
-                attrs.attribute(
-                        Category.CATEGORY_ATTRIBUTE, project.getObjects().named(Category.class, Category.LIBRARY));
             });
-
-            outgoing.getOutgoing().artifact(collectTask);
+            outgoing.getOutgoing().artifact(collectTask, artifact -> artifact.builtBy(collectTask));
         });
     }
 }

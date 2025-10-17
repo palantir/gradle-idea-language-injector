@@ -24,9 +24,9 @@ import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
-import org.gradle.api.artifacts.ResolvableConfiguration;
-import org.gradle.api.attributes.Category;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class RootPlugin implements Plugin<Project> {
@@ -39,7 +39,7 @@ public final class RootPlugin implements Plugin<Project> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
         });
 
-        NamedDomainObjectProvider<ResolvableConfiguration> resolvable = rootProject
+        Provider<FileCollection> files = rootProject
                 .getConfigurations()
                 .resolvable("ideaxmlResolvable", conf -> {
                     conf.extendsFrom(subprojectDependencies.get());
@@ -47,16 +47,19 @@ public final class RootPlugin implements Plugin<Project> {
                         attrs.attribute(
                                 Usage.USAGE_ATTRIBUTE,
                                 rootProject.getObjects().named(Usage.class, ProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
-                        attrs.attribute(
-                                Category.CATEGORY_ATTRIBUTE,
-                                rootProject.getObjects().named(Category.class, Category.LIBRARY));
                     });
-                });
+                })
+                .map(resolvable -> resolvable
+                        .getIncoming()
+                        .artifactView(view -> {
+                            view.lenient(true);
+                        })
+                        .getFiles());
 
         TaskProvider<UpdateXml> update = rootProject
                 .getTasks()
                 .register("updateIntelliLangXml", UpdateXml.class, task -> {
-                    task.getArtifactFiles().from(resolvable);
+                    task.getArtifactFiles().from(files);
                 });
 
         // Add the tasks to the Gradle start parameters so they execute automatically.
