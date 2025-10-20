@@ -31,7 +31,7 @@ public final class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> 
 
     static final String LANGUAGE_ANNOTATION_SCANS = "language-annotation-scans";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
-            Attribute.of("has-language-annotation", Boolean.class);
+            Attribute.of("com.palantir.idea-language-injector.has-language-annotation", Boolean.class);
 
     @Override
     public void apply(Project project) {
