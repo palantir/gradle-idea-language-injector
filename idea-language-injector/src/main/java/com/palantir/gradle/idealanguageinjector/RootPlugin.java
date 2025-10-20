@@ -62,10 +62,12 @@ public final class RootPlugin implements Plugin<Project> {
                     task.getArtifactFiles().from(files);
                 });
 
-        // Add the tasks to the Gradle start parameters so they execute automatically.
-        StartParameter startParameter = rootProject.getGradle().getStartParameter();
-        List<String> taskNames = new ArrayList<>(startParameter.getTaskNames());
-        taskNames.add(":" + update.getName());
-        startParameter.setTaskNames(taskNames);
+        if (!Boolean.getBoolean("idea.active") || !Boolean.getBoolean("idea.sync.active")) {
+            // Add the tasks to the Gradle start parameters so they execute automatically.
+            StartParameter startParameter = rootProject.getGradle().getStartParameter();
+            List<String> taskNames = new ArrayList<>(startParameter.getTaskNames());
+            taskNames.add(":" + update.getName());
+            startParameter.setTaskNames(taskNames);
+        }
     }
 }
