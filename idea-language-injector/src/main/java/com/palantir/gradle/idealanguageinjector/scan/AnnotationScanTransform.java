@@ -54,7 +54,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         }
 
         IntelliLangMapper.write(
-                outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE),
+                outputs.file(jarFile.getName().replace(".jar", "") + "-" + LANGUAGE_SCAN_FILE),
                 IntelliLangProject.of(IntelliLangComponent.of(injections)));
     }
 
@@ -82,9 +82,5 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         } catch (IOException e) {
             return Stream.empty();
         }
-    }
-
-    private static String stripJarExtension(String fileName) {
-        return fileName.endsWith(".jar") ? fileName.substring(0, fileName.length() - 4) : fileName;
     }
 }
