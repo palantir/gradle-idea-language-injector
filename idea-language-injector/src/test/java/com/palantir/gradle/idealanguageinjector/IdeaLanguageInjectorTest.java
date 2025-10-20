@@ -42,7 +42,6 @@ import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
-import org.gradle.testkit.runner.internal.PluginUnderTestMetadataReading;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,20 +56,6 @@ class IdeaLanguageInjectorTest {
         localRepo = Files.createTempDirectory("maven-repo");
 
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
-
-        // For settings plugins, we need to manually inject the plugin classpath
-        String classpathString = PluginUnderTestMetadataReading.readImplementationClasspath().stream()
-                .map(file -> "'" + file.getAbsolutePath() + "'")
-                .collect(Collectors.joining(", "));
-        rootProject.settingsGradle().append("""
-            buildscript {
-                dependencies {
-                    classpath files(%s)
-                }
-            }
-
-            apply plugin: 'com.palantir.idea-language-injector'
-            """.formatted(classpathString));
 
         // Setup build file
         rootProject.buildGradle().append("""
@@ -87,6 +72,32 @@ class IdeaLanguageInjectorTest {
                 implementation 'org.jetbrains:annotations:24.0.1'
             }
             """.formatted(localRepo.toUri()));
+
+        // For settings plugins, we need to manually inject the plugin classpath
+        String pluginClasspath = getPluginClasspath();
+        rootProject.settingsGradle().append("""
+            buildscript {
+                dependencies {
+                    classpath files(%s)
+                }
+            }
+
+            apply plugin: 'com.palantir.idea-language-injector'
+            """.formatted(pluginClasspath));
+    }
+
+    private static String getPluginClasspath() throws IOException {
+        Path metadataFile = Path.of("build/pluginUnderTestMetadata/plugin-under-test-metadata.properties");
+        String content = Files.readString(metadataFile);
+        String classpath = content.lines()
+                .filter(line -> line.startsWith("implementation-classpath="))
+                .map(line -> line.substring("implementation-classpath=".length()))
+                .findFirst()
+                .orElseThrow();
+
+        return Stream.of(classpath.split(":"))
+                .map(path -> "'" + path.replace("\\", "\\\\") + "'")
+                .collect(Collectors.joining(", "));
     }
 
     @Test
