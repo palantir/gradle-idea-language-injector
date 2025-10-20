@@ -59,7 +59,7 @@ class IdeaLanguageInjectorTest {
 
         // For settings plugins, we need to manually inject the plugin classpath
         String pluginClasspath = getPluginClasspath();
-        rootProject.settingsGradle().append("""
+        rootProject.settingsGradle().prepend("""
             buildscript {
                 dependencies {
                     classpath files(%s)
@@ -351,5 +351,70 @@ class IdeaLanguageInjectorTest {
         assertThat(rootProject.file(".idea/IntelliLang.xml").path())
                 .as("IntelliLang.xml should not be created when subproject dependencies have no annotations")
                 .doesNotExist();
+    }
+
+    @Test
+    void deduplicates_same_library_from_multiple_subprojects(
+            GradleInvoker gradle,
+            RootProject rootProject,
+            SubProject subProject1,
+            SubProject subProject2,
+            LibraryPublisher libraryPublisher)
+            throws IOException {
+        String library = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
+
+        subProject1.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
+
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
+
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(libraryPublisher.mavenRepoUri(), library));
+
+        subProject2.buildGradle().append("""
+            plugins {
+                id 'java'
+            }
+
+            repositories {
+                maven { url = uri('%s') }
+                mavenCentral()
+            }
+
+            dependencies {
+                implementation '%s'
+            }
+            """.formatted(libraryPublisher.mavenRepoUri(), library));
+
+        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+
+        String actual = rootProject.file(".idea/IntelliLang.xml").text();
+
+        // language=xml
+        String expected = """
+            <project version="4">
+              <component name="LanguageInjectionConfiguration">
+                <injection language="HTML" injector-id="java">
+                  <display-name>SimpleLib (com.example.simple)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("renderHtml").withParameters("java.lang.String").definedInClass("com.example.simple.SimpleLib"))]]></place>
+                </injection>
+                <injection language="SQL" injector-id="java">
+                  <display-name>SimpleLib (com.example.simple)</display-name>
+                  <single-file value="false"/>
+                  <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("query").withParameters("java.lang.String").definedInClass("com.example.simple.SimpleLib"))]]></place>
+                </injection>
+              </component>
+            </project>
+            """;
+
+        assertThat(expected).as("IntelliLang.xml should match expected").isEqualTo(actual);
     }
 }
