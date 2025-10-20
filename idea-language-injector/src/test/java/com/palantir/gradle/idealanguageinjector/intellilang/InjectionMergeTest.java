@@ -25,109 +25,110 @@ public class InjectionMergeTest {
 
     @Test
     void merge_with_combines_places() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        Injection merged = injection1.mergeWith(injection2);
+        IntelliLangInjection merged = injection1.mergeWith(injection2);
 
         assertThat(merged.places()).hasSize(2);
-        assertThat(merged.places().stream().map(Place::pattern)).containsExactlyInAnyOrder("pattern1", "pattern2");
+        assertThat(merged.places().stream().map(IntelliLangPlace::pattern))
+                .containsExactlyInAnyOrder("pattern1", "pattern2");
     }
 
     @Test
     void merge_with_removes_duplicate_places() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern1"))
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern2"))
-                .addPlaces(Place.of("pattern3"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern3"))
                 .build();
 
-        Injection merged = injection1.mergeWith(injection2);
+        IntelliLangInjection merged = injection1.mergeWith(injection2);
 
         assertThat(merged.places()).hasSize(3);
-        assertThat(merged.places().stream().map(Place::pattern))
+        assertThat(merged.places().stream().map(IntelliLangPlace::pattern))
                 .containsExactlyInAnyOrder("pattern1", "pattern2", "pattern3");
     }
 
     @Test
     void merge_all_combines_injections_with_same_key() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        List<Injection> merged = Injection.mergeAll(List.of(injection1, injection2));
+        List<IntelliLangInjection> merged = IntelliLangInjection.mergeAll(List.of(injection1, injection2));
 
         assertThat(merged).hasSize(1);
         assertThat(merged.get(0).places()).hasSize(2);
-        assertThat(merged.get(0).places().stream().map(Place::pattern))
+        assertThat(merged.get(0).places().stream().map(IntelliLangPlace::pattern))
                 .containsExactlyInAnyOrder("pattern1", "pattern2");
     }
 
     @Test
     void merge_all_keeps_separate_injections_with_different_keys() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass1 (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("JSON")
                 .displayName("TestClass2 (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        List<Injection> merged = Injection.mergeAll(List.of(injection1, injection2));
+        List<IntelliLangInjection> merged = IntelliLangInjection.mergeAll(List.of(injection1, injection2));
 
         assertThat(merged).hasSize(2);
     }
 
     @Test
     void merge_all_sorts_results() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("ZClass (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("JSON")
                 .displayName("AClass (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        Injection injection3 = Injection.builder()
+        IntelliLangInjection injection3 = IntelliLangInjection.builder()
                 .language("RegExp")
                 .displayName("MClass (com.example)")
-                .addPlaces(Place.of("pattern3"))
+                .addPlaces(IntelliLangPlace.of("pattern3"))
                 .build();
 
-        List<Injection> merged = Injection.mergeAll(List.of(injection1, injection2, injection3));
+        List<IntelliLangInjection> merged = IntelliLangInjection.mergeAll(List.of(injection1, injection2, injection3));
 
         assertThat(merged).hasSize(3);
         assertThat(merged.get(0).displayName()).isEqualTo("AClass (com.example)");
@@ -137,21 +138,21 @@ public class InjectionMergeTest {
 
     @Test
     void merge_all_with_different_injector_ids() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
                 .injectorId("java")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
                 .injectorId("kotlin")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        List<Injection> merged = Injection.mergeAll(List.of(injection1, injection2));
+        List<IntelliLangInjection> merged = IntelliLangInjection.mergeAll(List.of(injection1, injection2));
 
         // Different injector IDs means different keys, so they should remain separate
         assertThat(merged).hasSize(2);

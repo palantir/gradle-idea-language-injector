@@ -30,30 +30,30 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public final class IntelliLangXml {
-    private static final Logger log = LoggerFactory.getLogger(IntelliLangXml.class);
+public final class IntelliLangMapper {
+    private static final Logger log = LoggerFactory.getLogger(IntelliLangMapper.class);
 
     private static final ObjectMapper XML_MAPPER = new XmlMapper(new WstxInputFactory(), new WstxOutputFactory())
             .registerModule(new Jdk8Module())
             .registerModule(new GuavaModule())
             .enable(SerializationFeature.INDENT_OUTPUT);
 
-    private IntelliLangXml() {}
+    private IntelliLangMapper() {}
 
-    public static Project read(File file) {
+    public static IntelliLangProject read(File file) {
         if (!file.exists()) {
-            return Project.empty();
+            return IntelliLangProject.empty();
         }
         try {
-            return Optional.ofNullable(XML_MAPPER.readValue(file, Project.class))
-                    .orElseGet(Project::empty);
+            return Optional.ofNullable(XML_MAPPER.readValue(file, IntelliLangProject.class))
+                    .orElseGet(IntelliLangProject::empty);
         } catch (IOException e) {
             log.error("Failed to parse file: {}", file, e);
-            return Project.empty();
+            return IntelliLangProject.empty();
         }
     }
 
-    public static void write(File file, Project project) {
+    public static void write(File file, IntelliLangProject project) {
         try {
             file.getParentFile().mkdirs();
             XML_MAPPER.writeValue(file, project);

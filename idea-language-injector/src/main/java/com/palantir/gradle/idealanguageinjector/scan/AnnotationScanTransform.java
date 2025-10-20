@@ -15,10 +15,10 @@
  */
 package com.palantir.gradle.idealanguageinjector.scan;
 
-import com.palantir.gradle.idealanguageinjector.intellilang.Component;
-import com.palantir.gradle.idealanguageinjector.intellilang.Injection;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangXml;
-import com.palantir.gradle.idealanguageinjector.intellilang.Project;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangComponent;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangInjection;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangMapper;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangProject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,18 +47,18 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
     @Override
     public final void transform(TransformOutputs outputs) {
         File jarFile = getInputArtifact().get().getAsFile();
-        List<Injection> injections = scanJarForInjections(jarFile);
+        List<IntelliLangInjection> injections = scanJarForInjections(jarFile);
 
         if (injections.isEmpty()) {
             return;
         }
 
-        IntelliLangXml.write(
+        IntelliLangMapper.write(
                 outputs.file(stripJarExtension(jarFile.getName()) + "-" + LANGUAGE_SCAN_FILE),
-                Project.of(Component.of(injections)));
+                IntelliLangProject.of(IntelliLangComponent.of(injections)));
     }
 
-    private List<Injection> scanJarForInjections(File jarFile) {
+    private List<IntelliLangInjection> scanJarForInjections(File jarFile) {
         try (ZipFile zip = new ZipFile(jarFile)) {
             return zip.stream()
                     .filter(AnnotationScanTransform::isClassFile)
@@ -73,7 +73,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         return !entry.isDirectory() && entry.getName().endsWith(".class");
     }
 
-    public static Stream<Injection> scanClass(ZipFile zip, ZipEntry entry) {
+    public static Stream<IntelliLangInjection> scanClass(ZipFile zip, ZipEntry entry) {
         try (InputStream input = zip.getInputStream(entry)) {
             CollectingVisitor visitor = new CollectingVisitor();
             new ClassReader(input)

@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector.scan;
 
-import com.palantir.gradle.idealanguageinjector.intellilang.Injection;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangInjection;
 import com.palantir.gradle.idealanguageinjector.scan.CollectingVisitor.ClassContext;
 import java.util.Arrays;
 import java.util.List;
@@ -30,9 +30,13 @@ public final class MethodScanner extends MethodVisitor {
     private final ClassContext classContext;
     private final String methodName;
     private final List<String> parameterTypes;
-    private final Consumer<Injection> resultConsumer;
+    private final Consumer<IntelliLangInjection> resultConsumer;
 
-    MethodScanner(ClassContext classContext, String methodName, String descriptor, Consumer<Injection> resultConsumer) {
+    MethodScanner(
+            ClassContext classContext,
+            String methodName,
+            String descriptor,
+            Consumer<IntelliLangInjection> resultConsumer) {
         super(Opcodes.ASM9);
         this.classContext = classContext;
         this.methodName = methodName;
@@ -63,8 +67,8 @@ public final class MethodScanner extends MethodVisitor {
                     return;
                 }
 
-                resultConsumer.accept(
-                        Injection.from(classContext.className(), methodName, parameterTypes, parameter, language));
+                resultConsumer.accept(IntelliLangInjection.from(
+                        classContext.className(), methodName, parameterTypes, parameter, language));
             }
         };
     }

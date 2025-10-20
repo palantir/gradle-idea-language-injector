@@ -25,19 +25,19 @@ public class ComponentMergeTest {
 
     @Test
     void component_of_automatically_merges_injections() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        Component component = Component.of(List.of(injection1, injection2));
+        IntelliLangComponent component = IntelliLangComponent.of(List.of(injection1, injection2));
 
         assertThat(component.injections()).hasSize(1);
         assertThat(component.injections().get(0).places()).hasSize(2);
@@ -45,25 +45,25 @@ public class ComponentMergeTest {
 
     @Test
     void component_of_with_multiple_different_injections() {
-        Injection injection1 = Injection.builder()
+        IntelliLangInjection injection1 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass1 (com.example)")
-                .addPlaces(Place.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern1"))
                 .build();
 
-        Injection injection2 = Injection.builder()
+        IntelliLangInjection injection2 = IntelliLangInjection.builder()
                 .language("JSON")
                 .displayName("TestClass2 (com.example)")
-                .addPlaces(Place.of("pattern2"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        Injection injection3 = Injection.builder()
+        IntelliLangInjection injection3 = IntelliLangInjection.builder()
                 .language("SQL")
                 .displayName("TestClass1 (com.example)")
-                .addPlaces(Place.of("pattern3"))
+                .addPlaces(IntelliLangPlace.of("pattern3"))
                 .build();
 
-        Component component = Component.of(List.of(injection1, injection2, injection3));
+        IntelliLangComponent component = IntelliLangComponent.of(List.of(injection1, injection2, injection3));
 
         // injection1 and injection3 should be merged (same key)
         assertThat(component.injections()).hasSize(2);
@@ -71,14 +71,14 @@ public class ComponentMergeTest {
 
     @Test
     void component_of_with_empty_list() {
-        Component component = Component.of(List.of());
+        IntelliLangComponent component = IntelliLangComponent.of(List.of());
 
         assertThat(component.injections()).isEmpty();
     }
 
     @Test
     void component_name() {
-        Component component = Component.of(List.of());
+        IntelliLangComponent component = IntelliLangComponent.of(List.of());
 
         assertThat(component.name()).isEqualTo("LanguageInjectionConfiguration");
     }

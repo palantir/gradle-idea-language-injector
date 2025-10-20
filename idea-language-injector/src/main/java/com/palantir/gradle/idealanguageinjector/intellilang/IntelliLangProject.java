@@ -28,9 +28,9 @@ import org.immutables.value.Value;
  */
 @Value.Immutable
 @JacksonXmlRootElement(localName = "project")
-@JsonDeserialize(as = ImmutableProject.class)
+@JsonDeserialize(as = ImmutableIntelliLangProject.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface Project {
+public interface IntelliLangProject {
 
     @JacksonXmlProperty(isAttribute = true)
     @Value.Default
@@ -39,20 +39,20 @@ public interface Project {
     }
 
     @JacksonXmlProperty(localName = "component")
-    Component component();
+    IntelliLangComponent component();
 
-    static Project of(Component component) {
-        return ImmutableProject.builder().component(component).build();
+    static IntelliLangProject of(IntelliLangComponent component) {
+        return ImmutableIntelliLangProject.builder().component(component).build();
     }
 
-    static Project empty() {
-        return Project.of(Component.of(List.of()));
+    static IntelliLangProject empty() {
+        return IntelliLangProject.of(IntelliLangComponent.of(List.of()));
     }
 
-    static Project mergeAll(List<Project> projects) {
-        List<Injection> allInjections = projects.stream()
+    static IntelliLangProject mergeAll(List<IntelliLangProject> projects) {
+        List<IntelliLangInjection> allInjections = projects.stream()
                 .flatMap(project -> project.component().injections().stream())
                 .toList();
-        return Project.of(Component.of(allInjections));
+        return IntelliLangProject.of(IntelliLangComponent.of(allInjections));
     }
 }

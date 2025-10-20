@@ -32,9 +32,9 @@ import org.immutables.value.Value;
  * Represents a single language injection rule in IntelliLang.xml.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableInjection.class)
+@JsonDeserialize(as = ImmutableIntelliLangInjection.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface Injection {
+public interface IntelliLangInjection {
 
     @JacksonXmlProperty(isAttribute = true)
     String language();
@@ -50,24 +50,24 @@ public interface Injection {
 
     @JacksonXmlProperty(localName = "single-file")
     @Value.Default
-    default SingleFile singleFile() {
-        return SingleFile.defaultSingleFile();
+    default IntelliLangSingleFile singleFile() {
+        return IntelliLangSingleFile.defaultSingleFile();
     }
 
     @JacksonXmlProperty(localName = "place")
     @JacksonXmlElementWrapper(useWrapping = false)
-    List<Place> places();
+    List<IntelliLangPlace> places();
 
-    static ImmutableInjection.Builder builder() {
-        return ImmutableInjection.builder();
+    static ImmutableIntelliLangInjection.Builder builder() {
+        return ImmutableIntelliLangInjection.builder();
     }
 
-    static Injection from(
+    static IntelliLangInjection from(
             String className, String methodName, List<String> parameterTypes, int parameterIndex, String language) {
         return builder()
                 .language(language)
                 .displayName(buildDisplayName(className))
-                .addPlaces(Place.from(className, methodName, parameterTypes, parameterIndex))
+                .addPlaces(IntelliLangPlace.from(className, methodName, parameterTypes, parameterIndex))
                 .build();
     }
 
@@ -84,34 +84,34 @@ public interface Injection {
     /**
      * Merges multiple injections, combining injections with the same key (displayName, language, injectorId).
      */
-    static List<Injection> mergeAll(List<Injection> injections) {
-        Map<String, Injection> mergedMap = injections.stream()
+    static List<IntelliLangInjection> mergeAll(List<IntelliLangInjection> injections) {
+        Map<String, IntelliLangInjection> mergedMap = injections.stream()
                 .collect(Collectors.toMap(
                         i -> i.displayName() + "|" + i.language() + "|" + i.injectorId(),
                         injection -> injection,
-                        Injection::mergeWith,
+                        IntelliLangInjection::mergeWith,
                         LinkedHashMap::new));
 
         return mergedMap.values().stream()
-                .sorted(Comparator.comparing(Injection::displayName)
-                        .thenComparing(Injection::language)
-                        .thenComparing(Injection::injectorId))
+                .sorted(Comparator.comparing(IntelliLangInjection::displayName)
+                        .thenComparing(IntelliLangInjection::language)
+                        .thenComparing(IntelliLangInjection::injectorId))
                 .toList();
     }
 
     /**
      * Merges two injections by combining their places.
      */
-    default Injection mergeWith(Injection other) {
+    default IntelliLangInjection mergeWith(IntelliLangInjection other) {
         List<String> mergedPlaces = Stream.concat(this.places().stream(), other.places().stream())
-                .map(Place::pattern)
+                .map(IntelliLangPlace::pattern)
                 .distinct()
                 .sorted()
                 .toList();
 
         return builder()
                 .from(this)
-                .places(mergedPlaces.stream().map(Place::of).toList())
+                .places(mergedPlaces.stream().map(IntelliLangPlace::of).toList())
                 .build();
     }
 }

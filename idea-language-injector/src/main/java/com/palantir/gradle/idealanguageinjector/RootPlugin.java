@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
-import com.palantir.gradle.idealanguageinjector.intellilang.UpdateXml;
+import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
 import java.util.ArrayList;
 import java.util.List;
 import org.gradle.StartParameter;
@@ -56,9 +56,9 @@ public final class RootPlugin implements Plugin<Project> {
                         })
                         .getFiles());
 
-        TaskProvider<UpdateXml> update = rootProject
+        TaskProvider<UpdateIntelliLang> update = rootProject
                 .getTasks()
-                .register("updateIntelliLangXml", UpdateXml.class, task -> {
+                .register("updateIntelliLangXml", UpdateIntelliLang.class, task -> {
                     task.getArtifactFiles().from(files);
                 });
 

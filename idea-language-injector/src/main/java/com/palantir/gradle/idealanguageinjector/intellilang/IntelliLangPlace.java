@@ -25,23 +25,23 @@ import java.util.stream.Collectors;
 import org.immutables.value.Value;
 
 /**
- * Place element containing PSI pattern for IntelliLang.xml.
+ * IntelliLangPlace element containing PSI pattern for IntelliLang.xml.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutablePlace.class)
+@JsonDeserialize(as = ImmutableIntelliLangPlace.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface Place {
+public interface IntelliLangPlace {
 
     @JacksonXmlText(value = true)
     @JacksonXmlCData
     String pattern();
 
-    static Place of(String pattern) {
-        return ImmutablePlace.builder().pattern(pattern).build();
+    static IntelliLangPlace of(String pattern) {
+        return ImmutableIntelliLangPlace.builder().pattern(pattern).build();
     }
 
-    static Place from(String className, String methodName, List<String> parameterTypes, int parameterIndex) {
-        return ImmutablePlace.builder()
+    static IntelliLangPlace from(String className, String methodName, List<String> parameterTypes, int parameterIndex) {
+        return ImmutableIntelliLangPlace.builder()
                 .pattern(buildPatternString(className, methodName, parameterTypes, parameterIndex))
                 .build();
     }

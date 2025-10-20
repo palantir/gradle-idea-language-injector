@@ -32,8 +32,8 @@ import org.gradle.api.tasks.TaskAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class UpdateXml extends DefaultTask {
-    private static final Logger log = LoggerFactory.getLogger(UpdateXml.class);
+public abstract class UpdateIntelliLang extends DefaultTask {
+    private static final Logger log = LoggerFactory.getLogger(UpdateIntelliLang.class);
 
     @InputFiles
     public abstract ConfigurableFileCollection getArtifactFiles();
@@ -44,7 +44,7 @@ public abstract class UpdateXml extends DefaultTask {
     @Inject
     protected abstract ProjectLayout getProjectLayout();
 
-    public UpdateXml() {
+    public UpdateIntelliLang() {
         getIntelliLangFile().set(getProjectLayout().getProjectDirectory().file(".idea/IntelliLang.xml"));
     }
 
@@ -52,21 +52,21 @@ public abstract class UpdateXml extends DefaultTask {
     public final void updateXml() {
         File intelliLangFile = getIntelliLangFile().get().getAsFile();
 
-        List<Project> allProjects = Stream.concat(
-                        Stream.of(IntelliLangXml.read(intelliLangFile)),
+        List<IntelliLangProject> allProjects = Stream.concat(
+                        Stream.of(IntelliLangMapper.read(intelliLangFile)),
                         getArtifactFiles().getFiles().stream()
-                                .flatMap(UpdateXml::findScanFiles)
-                                .map(IntelliLangXml::read))
+                                .flatMap(UpdateIntelliLang::findScanFiles)
+                                .map(IntelliLangMapper::read))
                 .toList();
 
-        Project merged = Project.mergeAll(allProjects);
+        IntelliLangProject merged = IntelliLangProject.mergeAll(allProjects);
 
         if (merged.component().injections().isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        IntelliLangXml.write(intelliLangFile, merged);
+        IntelliLangMapper.write(intelliLangFile, merged);
     }
 
     private static Stream<File> findScanFiles(File file) {
