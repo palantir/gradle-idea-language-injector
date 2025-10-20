@@ -17,8 +17,8 @@
 package com.palantir.gradle.idealanguageinjector.intellilang;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -50,18 +50,16 @@ public abstract class UpdateIntelliLang extends DefaultTask {
     public final void updateXml() {
         File intelliLangFile = getIntelliLangFile().get().getAsFile();
 
-        List<IntelliLangProject> allProjects = Stream.concat(
-                        Stream.of(IntelliLangMapper.read(intelliLangFile)),
-                        getArtifactFiles().getFiles().stream().map(IntelliLangMapper::read))
+        List<IntelliLangInjection> allInjections = getArtifactFiles().getFiles().stream()
+                .map(IntelliLangMapper::read)
+                .flatMap(Collection::stream)
                 .toList();
 
-        IntelliLangProject merged = IntelliLangProject.mergeAll(allProjects);
-
-        if (merged.component().injections().isEmpty()) {
+        if (allInjections.isEmpty()) {
             log.info("No language injections found. Skipping update.");
             return;
         }
 
-        IntelliLangMapper.write(intelliLangFile, merged);
+        IntelliLangMapper.write(intelliLangFile, allInjections);
     }
 }

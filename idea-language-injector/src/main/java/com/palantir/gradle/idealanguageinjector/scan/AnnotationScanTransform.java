@@ -15,10 +15,8 @@
  */
 package com.palantir.gradle.idealanguageinjector.scan;
 
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangComponent;
 import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangInjection;
 import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangMapper;
-import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangProject;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,8 +52,7 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
         }
 
         IntelliLangMapper.write(
-                outputs.file(jarFile.getName().replace(".jar", "") + "-" + LANGUAGE_SCAN_FILE),
-                IntelliLangProject.of(IntelliLangComponent.of(injections)));
+                outputs.file(jarFile.getName().replace(".jar", "") + "-" + LANGUAGE_SCAN_FILE), injections);
     }
 
     private List<IntelliLangInjection> scanJarForInjections(File jarFile) {

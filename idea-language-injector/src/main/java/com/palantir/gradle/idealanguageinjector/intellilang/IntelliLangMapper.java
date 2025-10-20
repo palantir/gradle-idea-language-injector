@@ -26,6 +26,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,23 +42,24 @@ public final class IntelliLangMapper {
 
     private IntelliLangMapper() {}
 
-    public static IntelliLangProject read(File file) {
+    public static List<IntelliLangInjection> read(File file) {
         if (!file.exists()) {
-            return IntelliLangProject.empty();
+            return Collections.emptyList();
         }
         try {
             return Optional.ofNullable(XML_MAPPER.readValue(file, IntelliLangProject.class))
-                    .orElseGet(IntelliLangProject::empty);
+                    .map(intelliLangProject -> intelliLangProject.component().injections())
+                    .orElseGet(Collections::emptyList);
         } catch (IOException e) {
             log.error("Failed to parse file: {}", file, e);
-            return IntelliLangProject.empty();
+            return Collections.emptyList();
         }
     }
 
-    public static void write(File file, IntelliLangProject project) {
+    public static void write(File file, List<IntelliLangInjection> injections) {
         try {
             file.getParentFile().mkdirs();
-            XML_MAPPER.writeValue(file, project);
+            XML_MAPPER.writeValue(file, IntelliLangProject.of(IntelliLangComponent.of(injections)));
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to write xml", e);
         }

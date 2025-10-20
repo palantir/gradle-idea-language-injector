@@ -48,11 +48,4 @@ public interface IntelliLangProject {
     static IntelliLangProject empty() {
         return IntelliLangProject.of(IntelliLangComponent.of(List.of()));
     }
-
-    static IntelliLangProject mergeAll(List<IntelliLangProject> projects) {
-        List<IntelliLangInjection> allInjections = projects.stream()
-                .flatMap(project -> project.component().injections().stream())
-                .toList();
-        return IntelliLangProject.of(IntelliLangComponent.of(allInjections));
-    }
 }
