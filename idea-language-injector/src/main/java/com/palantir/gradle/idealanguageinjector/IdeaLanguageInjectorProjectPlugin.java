@@ -29,7 +29,7 @@ import org.gradle.api.tasks.TaskProvider;
 
 public final class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
-    static final String LANGUAGE_ANNOTATION_SCANS = "language-annotation-scans";
+    static final String LANGUAGE_ANNOTATION_SCANS = "language-annotation-locations";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
             Attribute.of("com.palantir.idea-language-injector.has-language-annotation", Boolean.class);
 
