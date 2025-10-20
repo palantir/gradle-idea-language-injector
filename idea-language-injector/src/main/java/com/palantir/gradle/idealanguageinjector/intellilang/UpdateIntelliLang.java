@@ -16,10 +16,8 @@
 
 package com.palantir.gradle.idealanguageinjector.intellilang;
 
-import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.gradle.api.DefaultTask;
@@ -54,9 +52,7 @@ public abstract class UpdateIntelliLang extends DefaultTask {
 
         List<IntelliLangProject> allProjects = Stream.concat(
                         Stream.of(IntelliLangMapper.read(intelliLangFile)),
-                        getArtifactFiles().getFiles().stream()
-                                .flatMap(UpdateIntelliLang::findScanFiles)
-                                .map(IntelliLangMapper::read))
+                        getArtifactFiles().getFiles().stream().map(IntelliLangMapper::read))
                 .toList();
 
         IntelliLangProject merged = IntelliLangProject.mergeAll(allProjects);
@@ -67,12 +63,5 @@ public abstract class UpdateIntelliLang extends DefaultTask {
         }
 
         IntelliLangMapper.write(intelliLangFile, merged);
-    }
-
-    private static Stream<File> findScanFiles(File file) {
-        return Optional.ofNullable(
-                        file.listFiles((_dir, name) -> name.endsWith(AnnotationScanTransform.LANGUAGE_SCAN_FILE)))
-                .stream()
-                .flatMap(Stream::of);
     }
 }

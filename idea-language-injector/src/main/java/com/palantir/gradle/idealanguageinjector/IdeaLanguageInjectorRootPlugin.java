@@ -17,6 +17,7 @@
 package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
+import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.util.ArrayList;
 import java.util.List;
 import org.gradle.StartParameter;
@@ -24,14 +25,20 @@ import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
+
+    static final String CONVERTED_TO_XML = "idea-language-injector-jars";
+
     @Override
     public void apply(Project rootProject) {
+        registerTransform(rootProject);
+
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("language-annotation-subprojects");
+                rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
 
         rootProject.allprojects(subproject -> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
@@ -43,7 +50,7 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
                     task.getArtifactFiles()
                             .from(rootProject
                                     .getConfigurations()
-                                    .resolvable("collected-language-annotation-locations", conf -> {
+                                    .resolvable("collected-idea-language-injector-outgoing", conf -> {
                                         conf.extendsFrom(subprojectDependencies.get());
                                         conf.setTransitive(false);
                                         conf.attributes(attrs -> {
@@ -53,14 +60,16 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
                                                             .getObjects()
                                                             .named(
                                                                     Usage.class,
-                                                                    IdeaLanguageInjectorProjectPlugin
-                                                                            .LANGUAGE_ANNOTATION_SCANS));
+                                                                    IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE));
                                         });
                                     })
                                     .map(resolvable -> resolvable
                                             .getIncoming()
                                             .artifactView(view -> {
                                                 view.lenient(true);
+                                                view.attributes(attrs -> attrs.attribute(
+                                                        ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                                        CONVERTED_TO_XML));
                                             })
                                             .getFiles()));
                 });
@@ -72,5 +81,12 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
             taskNames.add(":" + update.getName());
             startParameter.setTaskNames(taskNames);
         }
+    }
+
+    private static void registerTransform(Project rootProject) {
+        rootProject.getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
+            spec.getFrom().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE);
+            spec.getTo().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, CONVERTED_TO_XML);
+        });
     }
 }
