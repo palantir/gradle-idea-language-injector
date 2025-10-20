@@ -94,7 +94,9 @@ public class ComponentMergeTest {
         IntelliLangComponent expected = IntelliLangComponent.of(List.of());
         IntelliLangComponent actual = IntelliLangComponent.of(List.of());
 
-        assertThat(actual).as("component with empty list should have no injections").isEqualTo(expected);
+        assertThat(actual)
+                .as("component with empty list should have no injections")
+                .isEqualTo(expected);
     }
 
     @Test
@@ -102,6 +104,8 @@ public class ComponentMergeTest {
         String expected = "LanguageInjectionConfiguration";
         String actual = IntelliLangComponent.of(List.of()).name();
 
-        assertThat(actual).as("component name should be LanguageInjectionConfiguration").isEqualTo(expected);
+        assertThat(actual)
+                .as("component name should be LanguageInjectionConfiguration")
+                .isEqualTo(expected);
     }
 }
