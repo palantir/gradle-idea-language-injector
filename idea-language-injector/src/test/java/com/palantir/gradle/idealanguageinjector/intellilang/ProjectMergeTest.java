@@ -82,7 +82,9 @@ public class ProjectMergeTest {
         IntelliLangProject expected = IntelliLangProject.empty();
         IntelliLangProject actual = IntelliLangProject.mergeAll(List.of());
 
-        assertThat(actual).as("mergeAll with empty list should return empty project").isEqualTo(expected);
+        assertThat(actual)
+                .as("mergeAll with empty list should return empty project")
+                .isEqualTo(expected);
     }
 
     @Test
@@ -121,7 +123,9 @@ public class ProjectMergeTest {
         IntelliLangComponent component = IntelliLangComponent.of(List.of(injection));
 
         IntelliLangComponent actualComponent = IntelliLangProject.of(component).component();
-        assertThat(actualComponent).as("project should contain the provided component").isEqualTo(component);
+        assertThat(actualComponent)
+                .as("project should contain the provided component")
+                .isEqualTo(component);
 
         String expectedVersion = "4";
         String actualVersion = IntelliLangProject.of(component).version();
@@ -151,8 +155,8 @@ public class ProjectMergeTest {
         IntelliLangProject project1 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection1a)));
         IntelliLangProject project2 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection1b, injection2)));
 
-        IntelliLangProject expected = IntelliLangProject.of(IntelliLangComponent.of(List.of(
-                IntelliLangInjection.builder()
+        IntelliLangProject expected =
+                IntelliLangProject.of(IntelliLangComponent.of(List.of(IntelliLangInjection.builder()
                         .language("SQL")
                         .displayName("QueryBuilder (com.db)")
                         .addPlaces(IntelliLangPlace.of("psiParameter().ofMethod(0, psiMethod().withName(\"execute\"))"))
