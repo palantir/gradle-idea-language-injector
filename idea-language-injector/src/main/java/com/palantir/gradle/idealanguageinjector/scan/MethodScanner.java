@@ -17,7 +17,6 @@
 package com.palantir.gradle.idealanguageinjector.scan;
 
 import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangInjection;
-import com.palantir.gradle.idealanguageinjector.scan.CollectingVisitor.ClassContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
