@@ -37,10 +37,17 @@ public class ComponentMergeTest {
                 .addPlaces(IntelliLangPlace.of("pattern2"))
                 .build();
 
-        IntelliLangComponent component = IntelliLangComponent.of(List.of(injection1, injection2));
+        IntelliLangComponent expected = IntelliLangComponent.of(List.of(IntelliLangInjection.builder()
+                .language("SQL")
+                .displayName("TestClass (com.example)")
+                .addPlaces(IntelliLangPlace.of("pattern1"))
+                .addPlaces(IntelliLangPlace.of("pattern2"))
+                .build()));
+        IntelliLangComponent actual = IntelliLangComponent.of(List.of(injection1, injection2));
 
-        assertThat(component.injections()).hasSize(1);
-        assertThat(component.injections().get(0).places()).hasSize(2);
+        assertThat(actual)
+                .as("component should automatically merge injections with same key")
+                .isEqualTo(expected);
     }
 
     @Test
@@ -63,23 +70,38 @@ public class ComponentMergeTest {
                 .addPlaces(IntelliLangPlace.of("pattern3"))
                 .build();
 
-        IntelliLangComponent component = IntelliLangComponent.of(List.of(injection1, injection2, injection3));
+        IntelliLangComponent expected = IntelliLangComponent.of(List.of(
+                IntelliLangInjection.builder()
+                        .language("JSON")
+                        .displayName("TestClass2 (com.example)")
+                        .addPlaces(IntelliLangPlace.of("pattern2"))
+                        .build(),
+                IntelliLangInjection.builder()
+                        .language("SQL")
+                        .displayName("TestClass1 (com.example)")
+                        .addPlaces(IntelliLangPlace.of("pattern1"))
+                        .addPlaces(IntelliLangPlace.of("pattern3"))
+                        .build()));
+        IntelliLangComponent actual = IntelliLangComponent.of(List.of(injection1, injection2, injection3));
 
-        // injection1 and injection3 should be merged (same key)
-        assertThat(component.injections()).hasSize(2);
+        assertThat(actual)
+                .as("component should merge injections with same key and keep different ones separate")
+                .isEqualTo(expected);
     }
 
     @Test
     void component_of_with_empty_list() {
-        IntelliLangComponent component = IntelliLangComponent.of(List.of());
+        IntelliLangComponent expected = IntelliLangComponent.of(List.of());
+        IntelliLangComponent actual = IntelliLangComponent.of(List.of());
 
-        assertThat(component.injections()).isEmpty();
+        assertThat(actual).as("component with empty list should have no injections").isEqualTo(expected);
     }
 
     @Test
     void component_name() {
-        IntelliLangComponent component = IntelliLangComponent.of(List.of());
+        String expected = "LanguageInjectionConfiguration";
+        String actual = IntelliLangComponent.of(List.of()).name();
 
-        assertThat(component.name()).isEqualTo("LanguageInjectionConfiguration");
+        assertThat(actual).as("component name should be LanguageInjectionConfiguration").isEqualTo(expected);
     }
 }

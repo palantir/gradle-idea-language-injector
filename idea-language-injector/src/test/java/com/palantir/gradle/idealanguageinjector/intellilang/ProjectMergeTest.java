@@ -47,15 +47,23 @@ public class ProjectMergeTest {
         IntelliLangProject project2 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection2)));
         IntelliLangProject project3 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection3)));
 
-        IntelliLangProject merged = IntelliLangProject.mergeAll(List.of(project1, project2, project3));
+        IntelliLangProject expected = IntelliLangProject.of(IntelliLangComponent.of(List.of(
+                IntelliLangInjection.builder()
+                        .language("JSON")
+                        .displayName("OtherClass (com.example)")
+                        .addPlaces(IntelliLangPlace.of("pattern3"))
+                        .build(),
+                IntelliLangInjection.builder()
+                        .language("SQL")
+                        .displayName("TestClass (com.example)")
+                        .addPlaces(IntelliLangPlace.of("pattern1"))
+                        .addPlaces(IntelliLangPlace.of("pattern2"))
+                        .build())));
+        IntelliLangProject actual = IntelliLangProject.mergeAll(List.of(project1, project2, project3));
 
-        assertThat(merged.component().injections()).hasSize(2);
-        // Find the SQL injection (should have merged places)
-        IntelliLangInjection sqlInjection = merged.component().injections().stream()
-                .filter(i -> i.language().equals("SQL"))
-                .findFirst()
-                .orElseThrow();
-        assertThat(sqlInjection.places()).hasSize(2);
+        assertThat(actual)
+                .as("mergeAll should combine injections with same key and keep separate ones")
+                .isEqualTo(expected);
     }
 
     @Test
@@ -63,17 +71,18 @@ public class ProjectMergeTest {
         IntelliLangProject project1 = IntelliLangProject.of(IntelliLangComponent.of(List.of()));
         IntelliLangProject project2 = IntelliLangProject.of(IntelliLangComponent.of(List.of()));
 
-        IntelliLangProject merged = IntelliLangProject.mergeAll(List.of(project1, project2));
+        String expected = "4";
+        String actual = IntelliLangProject.mergeAll(List.of(project1, project2)).version();
 
-        assertThat(merged.version()).isEqualTo("4");
+        assertThat(actual).as("merged project should have default version").isEqualTo(expected);
     }
 
     @Test
     void project_merge_all_with_empty_list() {
-        IntelliLangProject merged = IntelliLangProject.mergeAll(List.of());
+        IntelliLangProject expected = IntelliLangProject.empty();
+        IntelliLangProject actual = IntelliLangProject.mergeAll(List.of());
 
-        assertThat(merged.component().injections()).isEmpty();
-        assertThat(merged.version()).isEqualTo("4");
+        assertThat(actual).as("mergeAll with empty list should return empty project").isEqualTo(expected);
     }
 
     @Test
@@ -88,18 +97,17 @@ public class ProjectMergeTest {
                 .build();
         IntelliLangProject projectWithData = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection)));
 
-        IntelliLangProject merged = IntelliLangProject.mergeAll(List.of(emptyProject1, projectWithData, emptyProject2));
+        IntelliLangProject actual = IntelliLangProject.mergeAll(List.of(emptyProject1, projectWithData, emptyProject2));
 
-        assertThat(merged.component().injections()).hasSize(1);
-        assertThat(merged.component().injections().get(0).language()).isEqualTo("SQL");
+        assertThat(actual).as("mergeAll should handle empty projects correctly").isEqualTo(projectWithData);
     }
 
     @Test
     void project_empty() {
-        IntelliLangProject empty = IntelliLangProject.empty();
+        IntelliLangProject expected = IntelliLangProject.of(IntelliLangComponent.of(List.of()));
+        IntelliLangProject actual = IntelliLangProject.empty();
 
-        assertThat(empty.component().injections()).isEmpty();
-        assertThat(empty.version()).isEqualTo("4");
+        assertThat(actual).as("empty project should have no injections").isEqualTo(expected);
     }
 
     @Test
@@ -111,10 +119,13 @@ public class ProjectMergeTest {
                 .build();
 
         IntelliLangComponent component = IntelliLangComponent.of(List.of(injection));
-        IntelliLangProject project = IntelliLangProject.of(component);
 
-        assertThat(project.component()).isEqualTo(component);
-        assertThat(project.version()).isEqualTo("4");
+        IntelliLangComponent actualComponent = IntelliLangProject.of(component).component();
+        assertThat(actualComponent).as("project should contain the provided component").isEqualTo(component);
+
+        String expectedVersion = "4";
+        String actualVersion = IntelliLangProject.of(component).version();
+        assertThat(actualVersion).as("project should have default version").isEqualTo(expectedVersion);
     }
 
     @Test
@@ -140,14 +151,17 @@ public class ProjectMergeTest {
         IntelliLangProject project1 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection1a)));
         IntelliLangProject project2 = IntelliLangProject.of(IntelliLangComponent.of(List.of(injection1b, injection2)));
 
-        IntelliLangProject merged = IntelliLangProject.mergeAll(List.of(project1, project2));
+        IntelliLangProject expected = IntelliLangProject.of(IntelliLangComponent.of(List.of(
+                IntelliLangInjection.builder()
+                        .language("SQL")
+                        .displayName("QueryBuilder (com.db)")
+                        .addPlaces(IntelliLangPlace.of("psiParameter().ofMethod(0, psiMethod().withName(\"execute\"))"))
+                        .addPlaces(IntelliLangPlace.of("psiParameter().ofMethod(0, psiMethod().withName(\"query\"))"))
+                        .build())));
+        IntelliLangProject actual = IntelliLangProject.mergeAll(List.of(project1, project2));
 
-        assertThat(merged.component().injections()).hasSize(1);
-        assertThat(merged.component().injections().get(0).places()).hasSize(2);
-        // Verify duplicate pattern was removed
-        assertThat(merged.component().injections().get(0).places().stream().map(IntelliLangPlace::pattern))
-                .containsExactlyInAnyOrder(
-                        "psiParameter().ofMethod(0, psiMethod().withName(\"query\"))",
-                        "psiParameter().ofMethod(0, psiMethod().withName(\"execute\"))");
+        assertThat(actual)
+                .as("mergeAll should deduplicate patterns when merging injections")
+                .isEqualTo(expected);
     }
 }
