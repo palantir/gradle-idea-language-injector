@@ -206,12 +206,14 @@ class IdeaLanguageInjectorTest {
         String library = publishLibrary("simple-lib", "SimpleLib.java");
         rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
 
-        gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
-
-        InvocationResult result =
+        InvocationResult firstRun =
+                gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
+        InvocationResult secondRun =
                 gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(result.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
+        assertThat(firstRun.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
+                .isNotIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
+        assertThat(secondRun.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
                 .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
     }
 
