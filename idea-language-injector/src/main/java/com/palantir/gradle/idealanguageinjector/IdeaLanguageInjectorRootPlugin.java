@@ -25,8 +25,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
@@ -39,32 +37,30 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
         });
 
-        Provider<FileCollection> files = rootProject
-                .getConfigurations()
-                .resolvable("intellilangResolvable", conf -> {
-                    conf.extendsFrom(subprojectDependencies.get());
-                    conf.setTransitive(false);
-                    conf.attributes(attrs -> {
-                        attrs.attribute(
-                                Usage.USAGE_ATTRIBUTE,
-                                rootProject
-                                        .getObjects()
-                                        .named(
-                                                Usage.class,
-                                                IdeaLanguageInjectorProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
-                    });
-                })
-                .map(resolvable -> resolvable
-                        .getIncoming()
-                        .artifactView(view -> {
-                            view.lenient(true);
-                        })
-                        .getFiles());
-
         TaskProvider<UpdateIntelliLang> update = rootProject
                 .getTasks()
                 .register("updateIntelliLangXml", UpdateIntelliLang.class, task -> {
-                    task.getArtifactFiles().from(files);
+                    task.getArtifactFiles().from(rootProject
+                            .getConfigurations()
+                            .resolvable("intellilangResolvable", conf -> {
+                                conf.extendsFrom(subprojectDependencies.get());
+                                conf.setTransitive(false);
+                                conf.attributes(attrs -> {
+                                    attrs.attribute(
+                                            Usage.USAGE_ATTRIBUTE,
+                                            rootProject
+                                                    .getObjects()
+                                                    .named(
+                                                            Usage.class,
+                                                            IdeaLanguageInjectorProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
+                                });
+                            })
+                            .map(resolvable -> resolvable
+                                    .getIncoming()
+                                    .artifactView(view -> {
+                                        view.lenient(true);
+                                    })
+                                    .getFiles()));
                 });
 
         if (Boolean.getBoolean("idea.active") && Boolean.getBoolean("idea.sync.active")) {
