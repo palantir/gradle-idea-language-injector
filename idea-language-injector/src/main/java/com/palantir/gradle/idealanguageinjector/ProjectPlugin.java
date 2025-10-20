@@ -16,12 +16,12 @@
 package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
+import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Usage;
-import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
@@ -68,21 +68,20 @@ public final class ProjectPlugin implements Plugin<Project> {
 
     private static TaskProvider<Sync> createCollectTask(Project project) {
         return project.getTasks().register("collectLanguageScans", Sync.class, task -> {
-            project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
-                task.from(project.getConfigurations()
-                        .named(sourceSet.getCompileClasspathConfigurationName())
-                        .map(conf -> conf.getIncoming()
-                                .artifactView(view -> {
-                                    view.lenient(true);
-                                    view.attributes(attrs -> attrs.attribute(
-                                            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, LANGUAGE_ANNOTATION_SCANS));
-                                })
-                                .getFiles()));
-            });
+            task.from(project.getExtensions().getByType(SourceSetContainer.class).stream()
+                    .map(sourceSet -> project.getConfigurations()
+                            .named(sourceSet.getCompileClasspathConfigurationName())
+                            .map(conf -> conf.getIncoming()
+                                    .artifactView(view -> {
+                                        view.lenient(true);
+                                        view.attributes(attrs -> attrs.attribute(
+                                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                                LANGUAGE_ANNOTATION_SCANS));
+                                    })
+                                    .getFiles()))
+                    .collect(Collectors.toList()));
 
-            DirectoryProperty outputDir = project.getObjects().directoryProperty();
-            outputDir.set(project.getLayout().getBuildDirectory().dir("annotation-scans-output"));
-            task.into(outputDir);
+            task.into(project.getLayout().getBuildDirectory().dir("annotation-scans-output"));
         });
     }
 
@@ -92,7 +91,7 @@ public final class ProjectPlugin implements Plugin<Project> {
                 attrs.attribute(
                         Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, LANGUAGE_ANNOTATION_SCANS));
             });
-            outgoing.getOutgoing().artifact(collectTask, artifact -> artifact.builtBy(collectTask));
+            outgoing.getOutgoing().artifact(collectTask);
         });
     }
 }
