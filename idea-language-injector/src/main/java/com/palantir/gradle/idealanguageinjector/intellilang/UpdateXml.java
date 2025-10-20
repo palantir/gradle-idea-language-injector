@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.ideaxml;
+package com.palantir.gradle.idealanguageinjector.intellilang;
 
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.io.File;

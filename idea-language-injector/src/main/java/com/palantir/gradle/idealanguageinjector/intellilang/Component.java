@@ -14,45 +14,40 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.ideaxml;
+package com.palantir.gradle.idealanguageinjector.intellilang;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import java.util.List;
 import org.immutables.value.Value;
 
 /**
- * Root element for IntelliLang.xml configuration file.
+ * Component element containing language injection configuration.
  */
 @Value.Immutable
-@JacksonXmlRootElement(localName = "project")
-@JsonDeserialize(as = ImmutableProject.class)
+@JsonDeserialize(as = ImmutableComponent.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface Project {
+public interface Component {
 
     @JacksonXmlProperty(isAttribute = true)
     @Value.Default
-    default String version() {
-        return "4";
+    default String name() {
+        return "LanguageInjectionConfiguration";
     }
 
-    @JacksonXmlProperty(localName = "component")
-    Component component();
+    @JacksonXmlProperty(localName = "injection")
+    @JacksonXmlElementWrapper(useWrapping = false)
+    List<Injection> injections();
 
-    static Project of(Component component) {
-        return ImmutableProject.builder().component(component).build();
-    }
-
-    static Project empty() {
-        return Project.of(Component.of(List.of()));
-    }
-
-    static Project mergeAll(List<Project> projects) {
-        List<Injection> allInjections = projects.stream()
-                .flatMap(project -> project.component().injections().stream())
-                .toList();
-        return Project.of(Component.of(allInjections));
+    /**
+     * Creates a component from a list of injections. Automatically merges injections with the same key
+     * (displayName, language, injectorId).
+     */
+    static Component of(List<Injection> injections) {
+        return ImmutableComponent.builder()
+                .injections(Injection.mergeAll(injections))
+                .build();
     }
 }

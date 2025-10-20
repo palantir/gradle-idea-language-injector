@@ -14,28 +14,45 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.ideaxml;
+package com.palantir.gradle.idealanguageinjector.intellilang;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import java.util.List;
 import org.immutables.value.Value;
 
 /**
- * Single-file configuration element for IntelliLang.xml.
+ * Root element for IntelliLang.xml configuration file.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableSingleFile.class)
+@JacksonXmlRootElement(localName = "project")
+@JsonDeserialize(as = ImmutableProject.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface SingleFile {
+public interface Project {
 
     @JacksonXmlProperty(isAttribute = true)
     @Value.Default
-    default String value() {
-        return "false";
+    default String version() {
+        return "4";
     }
 
-    static SingleFile defaultSingleFile() {
-        return ImmutableSingleFile.builder().build();
+    @JacksonXmlProperty(localName = "component")
+    Component component();
+
+    static Project of(Component component) {
+        return ImmutableProject.builder().component(component).build();
+    }
+
+    static Project empty() {
+        return Project.of(Component.of(List.of()));
+    }
+
+    static Project mergeAll(List<Project> projects) {
+        List<Injection> allInjections = projects.stream()
+                .flatMap(project -> project.component().injections().stream())
+                .toList();
+        return Project.of(Component.of(allInjections));
     }
 }

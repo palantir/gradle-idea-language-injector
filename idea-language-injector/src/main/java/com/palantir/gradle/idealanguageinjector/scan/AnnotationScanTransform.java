@@ -15,10 +15,10 @@
  */
 package com.palantir.gradle.idealanguageinjector.scan;
 
-import com.palantir.gradle.idealanguageinjector.ideaxml.Component;
-import com.palantir.gradle.idealanguageinjector.ideaxml.Injection;
-import com.palantir.gradle.idealanguageinjector.ideaxml.IntelliLangXml;
-import com.palantir.gradle.idealanguageinjector.ideaxml.Project;
+import com.palantir.gradle.idealanguageinjector.intellilang.Component;
+import com.palantir.gradle.idealanguageinjector.intellilang.Injection;
+import com.palantir.gradle.idealanguageinjector.intellilang.IntelliLangXml;
+import com.palantir.gradle.idealanguageinjector.intellilang.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

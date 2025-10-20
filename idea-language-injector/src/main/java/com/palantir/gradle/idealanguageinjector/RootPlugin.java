@@ -16,7 +16,7 @@
 
 package com.palantir.gradle.idealanguageinjector;
 
-import com.palantir.gradle.idealanguageinjector.ideaxml.UpdateXml;
+import com.palantir.gradle.idealanguageinjector.intellilang.UpdateXml;
 import java.util.ArrayList;
 import java.util.List;
 import org.gradle.StartParameter;
@@ -33,7 +33,7 @@ public final class RootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("ideaxml-subproject");
+                rootProject.getConfigurations().dependencyScope("intellilang-subproject");
 
         rootProject.allprojects(subproject -> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
@@ -41,7 +41,7 @@ public final class RootPlugin implements Plugin<Project> {
 
         Provider<FileCollection> files = rootProject
                 .getConfigurations()
-                .resolvable("ideaxmlResolvable", conf -> {
+                .resolvable("intellilangResolvable", conf -> {
                     conf.extendsFrom(subprojectDependencies.get());
                     conf.attributes(attrs -> {
                         attrs.attribute(

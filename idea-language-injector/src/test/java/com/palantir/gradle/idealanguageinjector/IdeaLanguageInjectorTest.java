@@ -36,11 +36,13 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 import javax.tools.ToolProvider;
+import org.gradle.testkit.runner.internal.PluginUnderTestMetadataReading;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,11 +58,19 @@ class IdeaLanguageInjectorTest {
 
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
 
-        rootProject.settingsGradle().edit(content -> """
-            plugins {
-                id 'com.palantir.idea-language-injector'
+        // For settings plugins, we need to manually inject the plugin classpath
+        String classpathString = PluginUnderTestMetadataReading.readImplementationClasspath().stream()
+                .map(file -> "'" + file.getAbsolutePath() + "'")
+                .collect(Collectors.joining(", "));
+        rootProject.settingsGradle().append("""
+            buildscript {
+                dependencies {
+                    classpath files(%s)
+                }
             }
-            """ + content);
+
+            apply plugin: 'com.palantir.idea-language-injector'
+            """.formatted(classpathString));
 
         // Setup build file
         rootProject.buildGradle().append("""

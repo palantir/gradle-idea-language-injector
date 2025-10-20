@@ -14,40 +14,28 @@
  * limitations under the License.
  */
 
-package com.palantir.gradle.idealanguageinjector.ideaxml;
+package com.palantir.gradle.idealanguageinjector.intellilang;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import java.util.List;
 import org.immutables.value.Value;
 
 /**
- * Component element containing language injection configuration.
+ * Single-file configuration element for IntelliLang.xml.
  */
 @Value.Immutable
-@JsonDeserialize(as = ImmutableComponent.class)
+@JsonDeserialize(as = ImmutableSingleFile.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface Component {
+public interface SingleFile {
 
     @JacksonXmlProperty(isAttribute = true)
     @Value.Default
-    default String name() {
-        return "LanguageInjectionConfiguration";
+    default String value() {
+        return "false";
     }
 
-    @JacksonXmlProperty(localName = "injection")
-    @JacksonXmlElementWrapper(useWrapping = false)
-    List<Injection> injections();
-
-    /**
-     * Creates a component from a list of injections. Automatically merges injections with the same key
-     * (displayName, language, injectorId).
-     */
-    static Component of(List<Injection> injections) {
-        return ImmutableComponent.builder()
-                .injections(Injection.mergeAll(injections))
-                .build();
+    static SingleFile defaultSingleFile() {
+        return ImmutableSingleFile.builder().build();
     }
 }
