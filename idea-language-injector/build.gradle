@@ -32,7 +32,7 @@ gradlePlugin {
     plugins {
         ideaLanguageInjector {
             id = 'com.palantir.idea-language-injector'
-            implementationClass = 'com.palantir.gradle.idealanguageinjector.SettingsPlugin'
+            implementationClass = 'com.palantir.gradle.idealanguageinjector.IdeaLanguageInjectorSettingsPlugin'
             displayName = 'Settings plugin to manage IDEA configuration files'
             description = displayName
         }

@@ -18,15 +18,15 @@ package com.palantir.gradle.idealanguageinjector;
 import org.gradle.api.Plugin;
 import org.gradle.api.initialization.Settings;
 
-public final class SettingsPlugin implements Plugin<Settings> {
+public final class IdeaLanguageInjectorSettingsPlugin implements Plugin<Settings> {
     @Override
     public void apply(Settings settings) {
         settings.getGradle().rootProject(rootProject -> {
-            rootProject.getPluginManager().apply(RootPlugin.class);
+            rootProject.getPluginManager().apply(IdeaLanguageInjectorRootPlugin.class);
         });
 
         settings.getGradle().getLifecycle().beforeProject(project -> {
-            project.getPluginManager().apply(ProjectPlugin.class);
+            project.getPluginManager().apply(IdeaLanguageInjectorProjectPlugin.class);
         });
     }
 }

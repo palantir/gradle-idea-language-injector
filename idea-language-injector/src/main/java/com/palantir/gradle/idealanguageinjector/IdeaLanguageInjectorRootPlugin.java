@@ -29,7 +29,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.TaskProvider;
 
-public final class RootPlugin implements Plugin<Project> {
+public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
@@ -47,7 +47,11 @@ public final class RootPlugin implements Plugin<Project> {
                     conf.attributes(attrs -> {
                         attrs.attribute(
                                 Usage.USAGE_ATTRIBUTE,
-                                rootProject.getObjects().named(Usage.class, ProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
+                                rootProject
+                                        .getObjects()
+                                        .named(
+                                                Usage.class,
+                                                IdeaLanguageInjectorProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
                     });
                 })
                 .map(resolvable -> resolvable

@@ -27,7 +27,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.Sync;
 import org.gradle.api.tasks.TaskProvider;
 
-public final class ProjectPlugin implements Plugin<Project> {
+public final class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
     static final String LANGUAGE_ANNOTATION_SCANS = "language-annotation-scans";
     private static final Attribute<Boolean> HAS_LANGUAGE_ANNOTATION =
