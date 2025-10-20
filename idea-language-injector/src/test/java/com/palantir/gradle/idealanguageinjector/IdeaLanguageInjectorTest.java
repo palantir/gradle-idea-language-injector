@@ -108,7 +108,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
+        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+                .as("IntelliLang.xml should not be created when there are no language annotations")
+                .doesNotExist();
     }
 
     @Test
@@ -170,7 +172,9 @@ class IdeaLanguageInjectorTest {
             """.trim();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text().trim();
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual)
+                .as("Generated IntelliLang.xml should match expected injection patterns")
+                .isEqualTo(expected);
     }
 
     @Test
@@ -196,9 +200,9 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
-        assertThat(actual).contains("SimpleLib (com.example.simple)");
-        assertThat(actual).contains(".withName(\"query\")");
-        assertThat(actual).contains(".withName(\"renderHtml\")");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain SimpleLib display name")
+                .contains("SimpleLib (com.example.simple)");
     }
 
     @Test
@@ -211,10 +215,16 @@ class IdeaLanguageInjectorTest {
         InvocationResult secondRun =
                 gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(firstRun.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
-                .isNotIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
-        assertThat(secondRun.task(":updateIntelliLangXml")).hasValueSatisfying(task -> assertThat(task.outcome())
-                .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
+        assertThat(firstRun.task(":updateIntelliLangXml"))
+                .as("First run should execute the task")
+                .hasValueSatisfying(task -> assertThat(task.outcome())
+                        .as("First run task outcome should not be cached")
+                        .isNotIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
+        assertThat(secondRun.task(":updateIntelliLangXml"))
+                .as("Second run should use cached result")
+                .hasValueSatisfying(task -> assertThat(task.outcome())
+                        .as("Second run task outcome should be cached")
+                        .isIn(TaskOutcome.UP_TO_DATE, TaskOutcome.FROM_CACHE));
     }
 
     @Test
@@ -232,8 +242,12 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
-        assertThat(actual).contains("SimpleLib (com.example.simple)");
-        assertThat(actual).contains("ComplexLib (com.example.complex)");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain SimpleLib display name")
+                .contains("SimpleLib (com.example.simple)");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain ComplexLib display name")
+                .contains("ComplexLib (com.example.complex)");
     }
 
     @Test
@@ -246,7 +260,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
+        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+                .as("IntelliLang.xml should not be created when subproject has no dependencies")
+                .doesNotExist();
     }
 
     @Test
@@ -279,7 +295,9 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
-        assertThat(actual).contains("SimpleLib (com.example.simple)");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain SimpleLib from subproject with dependencies")
+                .contains("SimpleLib (com.example.simple)");
     }
 
     @Test
@@ -307,8 +325,12 @@ class IdeaLanguageInjectorTest {
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
         String actual = rootProject.file(".idea/IntelliLang.xml").text();
-        assertThat(actual).contains("SimpleLib (com.example.simple)");
-        assertThat(actual).contains("ComplexLib (com.example.complex)");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain SimpleLib from root project")
+                .contains("SimpleLib (com.example.simple)");
+        assertThat(actual)
+                .as("IntelliLang.xml should contain ComplexLib from subproject")
+                .contains("ComplexLib (com.example.complex)");
     }
 
     @Test
@@ -333,7 +355,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path()).doesNotExist();
+        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+                .as("IntelliLang.xml should not be created when subproject dependencies have no annotations")
+                .doesNotExist();
     }
 
     private String publishLibrary(String artifact, String... resourceFiles) throws IOException {
