@@ -31,7 +31,7 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
     @Override
     public void apply(Project rootProject) {
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("intellilang-subproject");
+                rootProject.getConfigurations().dependencyScope("language-annotation-subprojects");
 
         rootProject.allprojects(subproject -> {
             rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
@@ -40,27 +40,29 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
         TaskProvider<UpdateIntelliLang> update = rootProject
                 .getTasks()
                 .register("updateIntelliLangXml", UpdateIntelliLang.class, task -> {
-                    task.getArtifactFiles().from(rootProject
-                            .getConfigurations()
-                            .resolvable("intellilangResolvable", conf -> {
-                                conf.extendsFrom(subprojectDependencies.get());
-                                conf.setTransitive(false);
-                                conf.attributes(attrs -> {
-                                    attrs.attribute(
-                                            Usage.USAGE_ATTRIBUTE,
-                                            rootProject
-                                                    .getObjects()
-                                                    .named(
-                                                            Usage.class,
-                                                            IdeaLanguageInjectorProjectPlugin.LANGUAGE_ANNOTATION_SCANS));
-                                });
-                            })
-                            .map(resolvable -> resolvable
-                                    .getIncoming()
-                                    .artifactView(view -> {
-                                        view.lenient(true);
+                    task.getArtifactFiles()
+                            .from(rootProject
+                                    .getConfigurations()
+                                    .resolvable("collected-language-annotation-locations", conf -> {
+                                        conf.extendsFrom(subprojectDependencies.get());
+                                        conf.setTransitive(false);
+                                        conf.attributes(attrs -> {
+                                            attrs.attribute(
+                                                    Usage.USAGE_ATTRIBUTE,
+                                                    rootProject
+                                                            .getObjects()
+                                                            .named(
+                                                                    Usage.class,
+                                                                    IdeaLanguageInjectorProjectPlugin
+                                                                            .LANGUAGE_ANNOTATION_SCANS));
+                                        });
                                     })
-                                    .getFiles()));
+                                    .map(resolvable -> resolvable
+                                            .getIncoming()
+                                            .artifactView(view -> {
+                                                view.lenient(true);
+                                            })
+                                            .getFiles()));
                 });
 
         if (Boolean.getBoolean("idea.active") && Boolean.getBoolean("idea.sync.active")) {
