@@ -42,7 +42,6 @@ class IdeaLanguageInjectorTest {
     void beforeEach(RootProject rootProject, LibraryPublisher libraryPublisher) throws IOException {
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
 
-        // Setup build file
         rootProject.buildGradle().append("""
             plugins {
                 id 'java'
