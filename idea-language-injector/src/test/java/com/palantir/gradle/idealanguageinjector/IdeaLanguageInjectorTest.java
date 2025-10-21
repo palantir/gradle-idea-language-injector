@@ -92,7 +92,7 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+        rootProject.file(".idea/IntelliLang.xml").assertThat()
                 .as("IntelliLang.xml should not be created when there are no language annotations")
                 .doesNotExist();
     }
@@ -235,7 +235,7 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+        rootProject.file(".idea/IntelliLang.xml").assertThat()
                 .as("IntelliLang.xml should not be created when subproject has no dependencies")
                 .doesNotExist();
     }
@@ -322,7 +322,7 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        assertThat(rootProject.file(".idea/IntelliLang.xml").path())
+        rootProject.file(".idea/IntelliLang.xml").assertThat()
                 .as("IntelliLang.xml should not be created when subproject dependencies have no annotations")
                 .doesNotExist();
     }
