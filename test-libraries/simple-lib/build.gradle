@@ -1,0 +1,17 @@
+apply plugin: 'java'
+apply plugin: 'com.palantir.external-publish-jar'
+
+group = 'com.example'
+version = '1.0.0'
+
+dependencies {
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}
+
+// Disable baseline checks for test library code
+tasks.withType(JavaCompile) {
+    options.errorprone.enabled = false
+}
+tasks.withType(Checkstyle) {
+    enabled = false
+}

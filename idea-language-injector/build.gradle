@@ -23,6 +23,9 @@ dependencies {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    dependsOn ':test-libraries:simple-lib:publishToMavenLocal'
+    dependsOn ':test-libraries:complex-lib:publishToMavenLocal'
+    dependsOn ':test-libraries:noannotations-lib:publishToMavenLocal'
 }
 
 gradlePlugin {

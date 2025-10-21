@@ -11,3 +11,6 @@ apply plugin: 'com.palantir.jdks.settings'
 rootProject.name = 'gradle-idea-language-injector'
 
 include 'idea-language-injector'
+include 'test-libraries:simple-lib'
+include 'test-libraries:complex-lib'
+include 'test-libraries:noannotations-lib'

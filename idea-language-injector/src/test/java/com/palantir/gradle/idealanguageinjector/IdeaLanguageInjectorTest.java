@@ -35,11 +35,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("LineLength")
 @GradlePluginTests
-@ExtendWith(LibraryPublisher.Extension.class)
 class IdeaLanguageInjectorTest {
+    private static final String SIMPLE_LIB = "com.example:simple-lib:1.0.0";
+    private static final String COMPLEX_LIB = "com.example:complex-lib:1.0.0";
+    private static final String NO_ANNOTATIONS_LIB = "com.example:noannotations-lib:1.0.0";
 
     @BeforeEach
-    void beforeEach(RootProject rootProject, LibraryPublisher libraryPublisher) throws IOException {
+    void beforeEach(RootProject rootProject) throws IOException {
         rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
 
         rootProject.buildGradle().append("""
@@ -48,14 +50,14 @@ class IdeaLanguageInjectorTest {
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation 'org.jetbrains:annotations:24.0.1'
             }
-            """.formatted(libraryPublisher.mavenRepoUri()));
+            """);
 
         // For settings plugins, we need to manually inject the plugin classpath
         String pluginClasspath = getPluginClasspath();
@@ -85,10 +87,8 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void handles_dependencies_without_annotations_gracefully(
-            GradleInvoker gradle, RootProject rootProject, LibraryPublisher libraryPublisher) throws IOException {
-        String library = libraryPublisher.publishLibrary("no-annotations", "NoAnnotations.java");
-        rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
+    void handles_dependencies_without_annotations_gracefully(GradleInvoker gradle, RootProject rootProject) {
+        rootProject.buildGradle().appendLine("dependencies { implementation '" + NO_ANNOTATIONS_LIB + "' }");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -98,10 +98,8 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void creates_IntelliLang_xml_with_proper_injection_patterns(
-            GradleInvoker gradle, RootProject rootProject, LibraryPublisher libraryPublisher) throws IOException {
-        String library = libraryPublisher.publishLibrary("complex-lib", "ComplexLib.java");
-        rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
+    void creates_IntelliLang_xml_with_proper_injection_patterns(GradleInvoker gradle, RootProject rootProject) {
+        rootProject.buildGradle().appendLine("dependencies { implementation '" + COMPLEX_LIB + "' }");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -162,25 +160,21 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void scans_subproject_dependencies(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject, LibraryPublisher libraryPublisher)
-            throws IOException {
-        String library = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-
+    void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject.buildGradle().append("""
             plugins {
                 id 'java'
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), library));
+            """.formatted(SIMPLE_LIB));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -191,10 +185,8 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void transform_is_cacheable(GradleInvoker gradle, RootProject rootProject, LibraryPublisher libraryPublisher)
-            throws IOException {
-        String library = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-        rootProject.buildGradle().appendLine("dependencies { implementation '" + library + "' }");
+    void transform_is_cacheable(GradleInvoker gradle, RootProject rootProject) {
+        rootProject.buildGradle().appendLine("dependencies { implementation '" + SIMPLE_LIB + "' }");
 
         InvocationResult firstRun =
                 gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
@@ -214,17 +206,13 @@ class IdeaLanguageInjectorTest {
     }
 
     @Test
-    void merges_multiple_libraries(GradleInvoker gradle, RootProject rootProject, LibraryPublisher libraryPublisher)
-            throws IOException {
-        String simpleLib = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-        String complexLib = libraryPublisher.publishLibrary("complex-lib", "ComplexLib.java");
-
+    void merges_multiple_libraries(GradleInvoker gradle, RootProject rootProject) {
         rootProject.buildGradle().append("""
             dependencies {
                 implementation '%s'
                 implementation '%s'
             }
-            """.formatted(simpleLib, complexLib));
+            """.formatted(SIMPLE_LIB, COMPLEX_LIB));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -254,28 +242,21 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_multiple_subprojects_with_mixed_dependencies(
-            GradleInvoker gradle,
-            RootProject rootProject,
-            SubProject subProject1,
-            SubProject subProject2,
-            LibraryPublisher libraryPublisher)
-            throws IOException {
-        String library = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
         subProject1.buildGradle().append("""
             plugins {
                 id 'java'
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), library));
+            """.formatted(SIMPLE_LIB));
 
         subProject2.buildGradle().append("""
             plugins {
@@ -293,26 +274,22 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void aggregates_dependencies_from_root_and_subproject(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject, LibraryPublisher libraryPublisher)
-            throws IOException {
-        String simpleLib = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-        String complexLib = libraryPublisher.publishLibrary("complex-lib", "ComplexLib.java");
-
-        rootProject.buildGradle().appendLine("dependencies { implementation '" + simpleLib + "' }");
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
+        rootProject.buildGradle().appendLine("dependencies { implementation '" + SIMPLE_LIB + "' }");
         subProject.buildGradle().append("""
             plugins {
                 id 'java'
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), complexLib));
+            """.formatted(COMPLEX_LIB));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -327,24 +304,21 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_subproject_with_non_annotation_dependencies(
-            GradleInvoker gradle, RootProject rootProject, SubProject subProject, LibraryPublisher libraryPublisher)
-            throws IOException {
-        String library = libraryPublisher.publishLibrary("no-annotations", "NoAnnotations.java");
-
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject.buildGradle().append("""
             plugins {
                 id 'java'
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), library));
+            """.formatted(NO_ANNOTATIONS_LIB));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -355,28 +329,21 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void deduplicates_same_library_from_multiple_subprojects(
-            GradleInvoker gradle,
-            RootProject rootProject,
-            SubProject subProject1,
-            SubProject subProject2,
-            LibraryPublisher libraryPublisher)
-            throws IOException {
-        String library = libraryPublisher.publishLibrary("simple-lib", "SimpleLib.java");
-
+            GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
         subProject1.buildGradle().append("""
             plugins {
                 id 'java'
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), library));
+            """.formatted(SIMPLE_LIB));
 
         subProject2.buildGradle().append("""
             plugins {
@@ -384,14 +351,14 @@ class IdeaLanguageInjectorTest {
             }
 
             repositories {
-                maven { url = uri('%s') }
+                mavenLocal()
                 mavenCentral()
             }
 
             dependencies {
                 implementation '%s'
             }
-            """.formatted(libraryPublisher.mavenRepoUri(), library));
+            """.formatted(SIMPLE_LIB));
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
