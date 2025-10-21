@@ -27,6 +27,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.TaskProvider;
 
 public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
@@ -41,7 +42,10 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
 
         rootProject.allprojects(subproject -> {
-            rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
+            subproject.getPlugins().withType(JavaPlugin.class, _javaPlugin -> {
+                subproject.getPlugins().apply(IdeaLanguageInjectorProjectPlugin.class);
+                rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
+            });
         });
 
         TaskProvider<UpdateIntelliLang> update = rootProject

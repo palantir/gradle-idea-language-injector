@@ -25,13 +25,8 @@ import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 @SuppressWarnings("LineLength")
 @GradlePluginTests
@@ -42,11 +37,10 @@ class IdeaLanguageInjectorTest {
 
     @BeforeEach
     void beforeEach(RootProject rootProject) throws IOException {
-        rootProject.gradlePropertiesFile().appendLine("org.gradle.unsafe.isolated-projects=true");
-
         rootProject.buildGradle().append("""
             plugins {
                 id 'java'
+                id 'com.palantir.idea-language-injector'
             }
 
             repositories {
@@ -58,32 +52,6 @@ class IdeaLanguageInjectorTest {
                 implementation 'org.jetbrains:annotations:24.0.1'
             }
             """);
-
-        // For settings plugins, we need to manually inject the plugin classpath
-        String pluginClasspath = getPluginClasspath();
-        rootProject.settingsGradle().prepend("""
-            buildscript {
-                dependencies {
-                    classpath files(%s)
-                }
-            }
-
-            apply plugin: 'com.palantir.idea-language-injector'
-            """.formatted(pluginClasspath));
-    }
-
-    private static String getPluginClasspath() throws IOException {
-        Path metadataFile = Path.of("build/pluginUnderTestMetadata/plugin-under-test-metadata.properties");
-        String content = Files.readString(metadataFile);
-        String classpath = content.lines()
-                .filter(line -> line.startsWith("implementation-classpath="))
-                .map(line -> line.substring("implementation-classpath=".length()))
-                .findFirst()
-                .orElseThrow();
-
-        return Stream.of(classpath.split(":"))
-                .map(path -> "'" + path.replace("\\", "\\\\") + "'")
-                .collect(Collectors.joining(", "));
     }
 
     @Test
@@ -92,7 +60,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        rootProject.file(".idea/IntelliLang.xml").assertThat()
+        rootProject
+                .file(".idea/IntelliLang.xml")
+                .assertThat()
                 .as("IntelliLang.xml should not be created when there are no language annotations")
                 .doesNotExist();
     }
@@ -235,7 +205,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        rootProject.file(".idea/IntelliLang.xml").assertThat()
+        rootProject
+                .file(".idea/IntelliLang.xml")
+                .assertThat()
                 .as("IntelliLang.xml should not be created when subproject has no dependencies")
                 .doesNotExist();
     }
@@ -322,7 +294,9 @@ class IdeaLanguageInjectorTest {
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
-        rootProject.file(".idea/IntelliLang.xml").assertThat()
+        rootProject
+                .file(".idea/IntelliLang.xml")
+                .assertThat()
                 .as("IntelliLang.xml should not be created when subproject dependencies have no annotations")
                 .doesNotExist();
     }
