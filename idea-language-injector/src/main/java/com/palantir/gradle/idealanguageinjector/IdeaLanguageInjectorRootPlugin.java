@@ -21,6 +21,7 @@ import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.util.ArrayList;
 import java.util.List;
 import org.gradle.StartParameter;
+import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -36,11 +37,18 @@ public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project rootProject) {
+        if (rootProject != rootProject.getRootProject()) {
+            throw new GradleException(
+                    "The com.palantir.idea-language-injector plugin must be applied on the root project");
+        }
+
         registerTransform(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
 
+        // to make this plugin isolated projects compatible instead of applying the project plugin here apply via a
+        // settings plugin
         rootProject.allprojects(subproject -> {
             subproject.getPlugins().withType(JavaPlugin.class, _javaPlugin -> {
                 subproject.getPlugins().apply(IdeaLanguageInjectorProjectPlugin.class);
