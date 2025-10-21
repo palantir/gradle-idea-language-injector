@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Set;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
@@ -64,9 +65,11 @@ public final class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> 
                         .named(sourceSet.getCompileClasspathConfigurationName())
                         .map(conf -> conf.getIncoming()
                                 .artifactView(view -> {
-                                    view.lenient(true);
                                     view.attributes(attrs -> {
                                         attrs.attribute(HAS_LANGUAGE_ANNOTATION, true);
+                                        attrs.attribute(
+                                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                                ArtifactTypeDefinition.JAR_TYPE);
                                     });
                                 })
                                 .getFiles()

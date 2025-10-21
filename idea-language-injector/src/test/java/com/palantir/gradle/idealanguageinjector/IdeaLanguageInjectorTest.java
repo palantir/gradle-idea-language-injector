@@ -24,7 +24,6 @@ import com.palantir.gradle.testing.execution.TaskOutcome;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
-import java.io.IOException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,7 @@ class IdeaLanguageInjectorTest {
     private static final String NO_ANNOTATIONS_LIB = "com.example:noannotations-lib:1.0.0";
 
     @BeforeEach
-    void beforeEach(RootProject rootProject) throws IOException {
+    void beforeEach(RootProject rootProject) {
         rootProject.buildGradle().append("""
             plugins {
                 id 'java'
