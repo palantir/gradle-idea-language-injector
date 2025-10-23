@@ -12,9 +12,15 @@ IntelliJ IDEA [does not recognize `@Language` annotations from external librarie
 
 **Example:** A library with `public void query(@Language("SQL") String sql)` won't provide SQL highlighting when you call it, even though the annotation exists in the JAR.
 
+### Before:
+![Before.png](media/Before.png)
+
 ## Solution
 
 This plugin scans dependency JARs at build time, extracts `@Language` metadata, and generates `.idea/IntelliLang.xml` so IntelliJ can provide language injection support for external libraries.
+
+### After:
+![After.png](media/After.png)
 
 ## Usage
 
