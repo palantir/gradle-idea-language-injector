@@ -41,19 +41,19 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
             });
 
             outgoing.getOutgoing()
-                    .artifacts(project.provider(() -> project.getExtensions()
-                            .getByType(SourceSetContainer.class)
-                            .stream()
-                            .flatMap(sourceSet -> project.getConfigurations()
-                                    .getByName(sourceSet.getCompileClasspathConfigurationName())
-                                    .getIncoming()
-                                    .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                            ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                                            ArtifactTypeDefinition.JAR_TYPE)))
-                                    .getFiles()
-                                    .getFiles()
-                                    .stream())
-                            .collect(Collectors.toSet())));
+                    .artifacts(
+                            project.provider(() -> project.getExtensions().getByType(SourceSetContainer.class).stream()
+                                    .flatMap(sourceSet -> project
+                                            .getConfigurations()
+                                            .getByName(sourceSet.getCompileClasspathConfigurationName())
+                                            .getIncoming()
+                                            .artifactView(view -> view.attributes(attrs -> attrs.attribute(
+                                                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                                    ArtifactTypeDefinition.JAR_TYPE)))
+                                            .getFiles()
+                                            .getFiles()
+                                            .stream())
+                                    .collect(Collectors.toSet())));
         });
     }
 }
