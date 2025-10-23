@@ -31,12 +31,12 @@ import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.TaskProvider;
 
-public final class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
+public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
 
     static final String CONVERTED_TO_XML = "idea-language-injector-jars";
 
     @Override
-    public void apply(Project rootProject) {
+    public final void apply(Project rootProject) {
         if (rootProject != rootProject.getRootProject()) {
             throw new GradleException(
                     "The com.palantir.idea-language-injector plugin must be applied on the root project");
