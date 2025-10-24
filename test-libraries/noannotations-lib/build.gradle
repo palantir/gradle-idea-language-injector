@@ -19,3 +19,8 @@ tasks.withType(JavaCompile) {
 tasks.withType(Checkstyle) {
     enabled = false
 }
+
+// Only publish to mavenLocal, not to Sonatype
+tasks.withType(PublishToMavenRepository).configureEach {
+    enabled = repository.name == 'MavenLocal'
+}
