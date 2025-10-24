@@ -5,4 +5,4 @@ org.junit.vintage:* = 6.0.0
 org.junit.platform:* = 6.0.0
 com.fasterxml.jackson.*:* = 2.19.2
 org.ow2.asm:asm = 9.9
-org.immutables:value = 2.10.1
+org.immutables:value = 2.11.6
