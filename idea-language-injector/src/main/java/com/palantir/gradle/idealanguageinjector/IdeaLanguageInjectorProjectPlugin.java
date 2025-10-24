@@ -15,6 +15,8 @@
  */
 package com.palantir.gradle.idealanguageinjector;
 
+import java.io.File;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -40,20 +42,21 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
                 attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, OUTGOING_USAGE));
             });
 
-            outgoing.getOutgoing()
-                    .artifacts(
-                            project.provider(() -> project.getExtensions().getByType(SourceSetContainer.class).stream()
-                                    .flatMap(sourceSet -> project
-                                            .getConfigurations()
-                                            .getByName(sourceSet.getCompileClasspathConfigurationName())
-                                            .getIncoming()
-                                            .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
-                                                    ArtifactTypeDefinition.JAR_TYPE)))
-                                            .getFiles()
-                                            .getFiles()
-                                            .stream())
-                                    .collect(Collectors.toSet())));
+            outgoing.getOutgoing().artifacts(project.provider(() -> sourceSetArtifacts(project)));
         });
+    }
+
+    private static Set<File> sourceSetArtifacts(Project project) {
+        return project.getExtensions().getByType(SourceSetContainer.class).stream()
+                .flatMap(sourceSet -> project
+                        .getConfigurations()
+                        .getByName(sourceSet.getCompileClasspathConfigurationName())
+                        .getIncoming()
+                        .artifactView(view -> view.attributes(attrs -> attrs.attribute(
+                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)))
+                        .getFiles()
+                        .getFiles()
+                        .stream())
+                .collect(Collectors.toSet());
     }
 }
