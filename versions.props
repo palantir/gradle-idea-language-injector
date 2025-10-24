@@ -3,3 +3,6 @@ junit:junit = 4.13.2
 org.junit.jupiter:* = 6.0.0
 org.junit.vintage:* = 6.0.0
 org.junit.platform:* = 6.0.0
+com.fasterxml.jackson.*:* = 2.19.2
+org.ow2.asm:asm = 9.9
+org.immutables:value = 2.10.1

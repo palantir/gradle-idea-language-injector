@@ -5,6 +5,15 @@ apply plugin: 'com.palantir.external-publish-jar'
 
 
 dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
+    implementation 'org.ow2.asm:asm'
+
+    annotationProcessor 'org.immutables:value'
+    compileOnly 'org.immutables:value::annotations'
+
     testImplementation gradleTestKit()
     testImplementation 'com.netflix.nebula:nebula-test'
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -13,6 +22,9 @@ dependencies {
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    dependsOn ':test-libraries:simple-lib:publishToMavenLocal'
+    dependsOn ':test-libraries:complex-lib:publishToMavenLocal'
+    dependsOn ':test-libraries:noannotations-lib:publishToMavenLocal'
 }
 
 gradlePlugin {
@@ -22,7 +34,7 @@ gradlePlugin {
     plugins {
         ideaLanguageInjector {
             id = 'com.palantir.idea-language-injector'
-            implementationClass = 'com.palantir.gradle.idealanguageinjector.SettingsPlugin'
+            implementationClass = 'com.palantir.gradle.idealanguageinjector.IdeaLanguageInjectorRootPlugin'
             displayName = 'Settings plugin to manage IDEA configuration files'
             description = displayName
         }
@@ -30,5 +42,5 @@ gradlePlugin {
 }
 
 gradleTestUtils {
-    gradleVersions = ['8.14.3']
+    gradleVersions = ['9.0.0', '8.14.3']
 }

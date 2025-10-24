@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.palantir.gradle.idealanguageinjector;
 
-import org.gradle.api.Plugin;
-import org.gradle.api.initialization.Settings;
+package com.palantir.gradle.idealanguageinjector.scan;
 
-public final class SettingsPlugin implements Plugin<Settings> {
-    @Override
-    public void apply(Settings _settings) {}
-}
+public record ClassContext(String className, boolean isNonStaticInnerClass) {}
