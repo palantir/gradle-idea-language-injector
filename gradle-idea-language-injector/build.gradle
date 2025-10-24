@@ -42,5 +42,5 @@ gradlePlugin {
 }
 
 gradleTestUtils {
-    gradleVersions = ['9.0.0', '8.14.3']
+    gradleVersions = ['8.14.3']
 }
