@@ -45,6 +45,8 @@ public abstract class AnnotationScanTransform implements TransformAction<None> {
     @Override
     public final void transform(TransformOutputs outputs) {
         File jarFile = getInputArtifact().get().getAsFile();
+
+        System.out.println(jarFile.getAbsolutePath());
         List<IntelliLangInjection> injections = scanJarForInjections(jarFile);
 
         if (injections.isEmpty()) {
