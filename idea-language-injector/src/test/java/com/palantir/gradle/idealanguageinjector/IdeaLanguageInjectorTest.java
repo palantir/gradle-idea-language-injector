@@ -355,6 +355,6 @@ class IdeaLanguageInjectorTest {
             </project>
             """;
 
-        assertThat(expected).as("IntelliLang.xml should match expected").isEqualTo(actual);
+        assertThat(actual).as("IntelliLang.xml should match expected").isEqualTo(expected);
     }
 }
