@@ -8,7 +8,7 @@ A Gradle plugin that automatically generates IntelliJ IDEA language injection co
 
 ## Problem
 
-IntelliJ IDEA [does not recognize `@Language` annotations from external libraries](https://youtrack.jetbrains.com/issue/IDEA-303529), preventing syntax highlighting and code completion for SQL, HTML, JSON, etc. in annotated string parameters.
+IntelliJ IDEA [does not recognize `@Language` annotations from external libraries](https://youtrack.jetbrains.com/issue/IDEA-303529), preventing syntax highlighting and code completion for SQL, HTML, JSON, etc. in annotated string parameters. Ideally this plugin should not exist and would not be needed if the intellij bug is fixed.
 
 **Example:** A library with `public void query(@Language("SQL") String sql)` won't provide SQL highlighting when you call it, even though the annotation exists in the JAR.
 
