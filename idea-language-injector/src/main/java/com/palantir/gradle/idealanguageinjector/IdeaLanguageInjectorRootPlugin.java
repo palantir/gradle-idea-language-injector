@@ -20,6 +20,7 @@ import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.gradle.StartParameter;
 import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
@@ -52,8 +53,18 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         rootProject.allprojects(subproject -> {
             subproject.getPlugins().withType(JavaPlugin.class, _javaPlugin -> {
                 subproject.getPlugins().apply(IdeaLanguageInjectorProjectPlugin.class);
-                rootProject.getDependencies().add(subprojectDependencies.getName(), subproject);
             });
+        });
+
+        subprojectDependencies.configure(subprojectDeps -> {
+            subprojectDeps
+                    .getDependencies()
+                    .addAllLater(rootProject.provider(() -> rootProject.getAllprojects().stream()
+                            .map(subproject -> rootProject
+                                    .getDependencies()
+                                    .project(Map.of(
+                                            "path", subproject.getIsolated().getPath())))
+                            .toList()));
         });
 
         TaskProvider<UpdateIntelliLang> update = rootProject
