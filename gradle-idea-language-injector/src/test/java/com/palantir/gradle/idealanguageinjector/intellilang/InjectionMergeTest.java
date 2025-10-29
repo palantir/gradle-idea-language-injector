@@ -102,7 +102,7 @@ public class InjectionMergeTest {
 
         assertThat(actual)
                 .as("mergeAll should combine injections with same key")
-                .isEqualTo(expected);
+                .containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class InjectionMergeTest {
         List<IntelliLangInjection> expected = List.of(injection2, injection3, injection1);
         List<IntelliLangInjection> actual = IntelliLangInjection.mergeAll(List.of(injection1, injection2, injection3));
 
-        assertThat(actual).as("mergeAll should sort results by display name").isEqualTo(expected);
+        assertThat(actual).as("mergeAll should sort results by display name").containsExactlyElementsOf(expected);
     }
 
     @Test
@@ -152,6 +152,6 @@ public class InjectionMergeTest {
 
         assertThat(actual)
                 .as("mergeAll should keep injections with different injector IDs separate")
-                .isEqualTo(expected);
+                .containsExactlyElementsOf(expected);
     }
 }

@@ -1,6 +1,7 @@
 com.fasterxml.jackson.core:jackson-annotations = 2.20
 com.netflix.nebula:nebula-test = 10.6.2
 junit:junit = 4.13.2
+org.assertj:assertj-core = 3.27.6
 org.junit.jupiter:* = 6.0.0
 org.junit.vintage:* = 6.0.0
 org.junit.platform:* = 6.0.0
