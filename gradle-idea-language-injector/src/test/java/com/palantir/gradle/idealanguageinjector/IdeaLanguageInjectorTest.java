@@ -143,7 +143,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(SIMPLE_LIB));
+            """, SIMPLE_LIB);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -181,7 +181,7 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
                 implementation '%s'
             }
-            """.formatted(SIMPLE_LIB, COMPLEX_LIB));
+            """, SIMPLE_LIB, COMPLEX_LIB);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -227,7 +227,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(SIMPLE_LIB));
+            """, SIMPLE_LIB);
 
         subProject2.buildGradle().append("""
             plugins {
@@ -260,7 +260,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(COMPLEX_LIB));
+            """, COMPLEX_LIB);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -289,7 +289,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(NO_ANNOTATIONS_LIB));
+            """, NO_ANNOTATIONS_LIB);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -316,7 +316,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(SIMPLE_LIB));
+            """, SIMPLE_LIB);
 
         subProject2.buildGradle().append("""
             plugins {
@@ -331,7 +331,7 @@ class IdeaLanguageInjectorTest {
             dependencies {
                 implementation '%s'
             }
-            """.formatted(SIMPLE_LIB));
+            """, SIMPLE_LIB);
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
