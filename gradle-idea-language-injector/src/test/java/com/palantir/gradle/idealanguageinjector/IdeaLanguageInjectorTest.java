@@ -37,11 +37,6 @@ class IdeaLanguageInjectorTest {
     @BeforeEach
     void beforeEach(RootProject rootProject) {
         rootProject.buildGradle().append("""
-            plugins {
-                id 'java'
-                id 'com.palantir.idea-language-injector'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -51,6 +46,7 @@ class IdeaLanguageInjectorTest {
                 implementation 'org.jetbrains:annotations:24.0.1'
             }
             """);
+        rootProject.buildGradle().plugins().add("java").add("com.palantir.idea-language-injector");
     }
 
     @Test
@@ -128,6 +124,7 @@ class IdeaLanguageInjectorTest {
                 .isEqualTo(expected);
     }
 
+    @SuppressWarnings("for-rollout:GradleTestPluginsBlock")
     @Test
     void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject.buildGradle().append("""
@@ -196,11 +193,8 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_subproject_without_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        subProject.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-            """);
+
+        subProject.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -211,6 +205,7 @@ class IdeaLanguageInjectorTest {
                 .doesNotExist();
     }
 
+    @SuppressWarnings("for-rollout:GradleTestPluginsBlock")
     @Test
     void handles_multiple_subprojects_with_mixed_dependencies(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
@@ -229,11 +224,7 @@ class IdeaLanguageInjectorTest {
             }
             """, SIMPLE_LIB);
 
-        subProject2.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-            """);
+        subProject2.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -243,6 +234,7 @@ class IdeaLanguageInjectorTest {
                 .contains("SimpleLib (com.example.simple)");
     }
 
+    @SuppressWarnings("for-rollout:GradleTestPluginsBlock")
     @Test
     void aggregates_dependencies_from_root_and_subproject(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
@@ -273,6 +265,7 @@ class IdeaLanguageInjectorTest {
                 .contains("ComplexLib (com.example.complex)");
     }
 
+    @SuppressWarnings("for-rollout:GradleTestPluginsBlock")
     @Test
     void handles_subproject_with_non_annotation_dependencies(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
@@ -300,6 +293,7 @@ class IdeaLanguageInjectorTest {
                 .doesNotExist();
     }
 
+    @SuppressWarnings("for-rollout:GradleTestPluginsBlock")
     @Test
     void deduplicates_same_library_from_multiple_subprojects(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
