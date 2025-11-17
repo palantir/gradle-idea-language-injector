@@ -37,11 +37,6 @@ class IdeaLanguageInjectorTest {
     @BeforeEach
     void beforeEach(RootProject rootProject) {
         rootProject.buildGradle().append("""
-            plugins {
-                id 'java'
-                id 'com.palantir.idea-language-injector'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -51,6 +46,7 @@ class IdeaLanguageInjectorTest {
                 implementation 'org.jetbrains:annotations:24.0.1'
             }
             """);
+        rootProject.buildGradle().plugins().add("java").add("com.palantir.idea-language-injector");
     }
 
     @Test
@@ -131,10 +127,6 @@ class IdeaLanguageInjectorTest {
     @Test
     void scans_subproject_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -144,6 +136,7 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, SIMPLE_LIB);
+        subProject.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -196,11 +189,8 @@ class IdeaLanguageInjectorTest {
 
     @Test
     void handles_subproject_without_dependencies(GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
-        subProject.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-            """);
+
+        subProject.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -215,10 +205,6 @@ class IdeaLanguageInjectorTest {
     void handles_multiple_subprojects_with_mixed_dependencies(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
         subProject1.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -228,12 +214,9 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, SIMPLE_LIB);
+        subProject1.buildGradle().plugins().add("java");
 
-        subProject2.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-            """);
+        subProject2.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -248,10 +231,6 @@ class IdeaLanguageInjectorTest {
             GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         rootProject.buildGradle().appendLine("dependencies { implementation '" + SIMPLE_LIB + "' }");
         subProject.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -261,6 +240,7 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, COMPLEX_LIB);
+        subProject.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -277,10 +257,6 @@ class IdeaLanguageInjectorTest {
     void handles_subproject_with_non_annotation_dependencies(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject) {
         subProject.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -290,6 +266,7 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, NO_ANNOTATIONS_LIB);
+        subProject.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
@@ -304,10 +281,6 @@ class IdeaLanguageInjectorTest {
     void deduplicates_same_library_from_multiple_subprojects(
             GradleInvoker gradle, RootProject rootProject, SubProject subProject1, SubProject subProject2) {
         subProject1.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -317,12 +290,9 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, SIMPLE_LIB);
+        subProject1.buildGradle().plugins().add("java");
 
         subProject2.buildGradle().append("""
-            plugins {
-                id 'java'
-            }
-
             repositories {
                 mavenLocal()
                 mavenCentral()
@@ -332,6 +302,7 @@ class IdeaLanguageInjectorTest {
                 implementation '%s'
             }
             """, SIMPLE_LIB);
+        subProject2.buildGradle().plugins().add("java");
 
         gradle.withArgs("-Didea.active=true", "-Didea.sync.active=true").buildsSuccessfully();
 
