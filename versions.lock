@@ -32,7 +32,7 @@ org.jetbrains:annotations:26.0.2 (2 constraints: 111ff78c)
 
 org.jspecify:jspecify:1.0.0 (8 constraints: c9803ac0)
 
-org.ow2.asm:asm:9.9 (1 constraints: b6043b2c)
+org.ow2.asm:asm:9.9.1 (1 constraints: 15053436)
 
 
 
