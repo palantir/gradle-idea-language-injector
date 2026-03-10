@@ -15,13 +15,12 @@
  */
 package com.palantir.gradle.idealanguageinjector;
 
-import java.io.File;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.tasks.SourceSetContainer;
 
@@ -42,21 +41,25 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
                 attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, OUTGOING_USAGE));
             });
 
-            outgoing.getOutgoing().artifacts(project.provider(() -> sourceSetArtifacts(project)));
+            outgoing.getOutgoing()
+                    .artifacts(project.provider(() -> sourceSetArtifactView(project, ArtifactTypeDefinition.JAR_TYPE)
+                            .getFiles()));
         });
     }
 
-    private static Set<File> sourceSetArtifacts(Project project) {
-        return project.getExtensions().getByType(SourceSetContainer.class).stream()
-                .flatMap(sourceSet -> project
-                        .getConfigurations()
-                        .getByName(sourceSet.getCompileClasspathConfigurationName())
-                        .getIncoming()
-                        .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)))
-                        .getFiles()
-                        .getFiles()
-                        .stream())
-                .collect(Collectors.toSet());
+    static FileCollection sourceSetArtifactView(Project project, String artifactType) {
+        ConfigurableFileCollection files = project.files();
+        project.getExtensions().getByType(SourceSetContainer.class).all(sourceSet -> {
+            files.from(project.getConfigurations()
+                    .getByName(sourceSet.getCompileClasspathConfigurationName())
+                    .getIncoming()
+                    .artifactView(view -> {
+                        view.lenient(true);
+                        view.attributes(
+                                attrs -> attrs.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, artifactType));
+                    })
+                    .getFiles());
+        });
+        return files;
     }
 }

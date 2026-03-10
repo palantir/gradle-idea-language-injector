@@ -11,8 +11,6 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'org.ow2.asm:asm'
 
-    compileOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
-
     annotationProcessor 'org.immutables:value'
     compileOnly 'org.immutables:value::annotations'
 

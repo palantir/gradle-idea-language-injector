@@ -18,7 +18,6 @@ package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
-import com.palantir.gradle.versions.VersionRecommendationsExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,14 +44,13 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
 
         registerTransform(rootProject);
-        excludeFromConsistentVersions(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
 
         // to make this plugin isolated projects compatible instead of applying the project plugin here apply via a
         // settings plugin
-        rootProject.allprojects(subproject -> {
+        rootProject.subprojects(subproject -> {
             subproject.getPlugins().withType(JavaPlugin.class, _javaPlugin -> {
                 subproject.getPlugins().apply(IdeaLanguageInjectorProjectPlugin.class);
             });
@@ -61,7 +59,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         subprojectDependencies.configure(subprojectDeps -> {
             subprojectDeps
                     .getDependencies()
-                    .addAllLater(rootProject.provider(() -> rootProject.getAllprojects().stream()
+                    .addAllLater(rootProject.provider(() -> rootProject.getSubprojects().stream()
                             .map(subproject -> rootProject
                                     .getDependencies()
                                     .project(Map.of(
@@ -97,6 +95,15 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                                                         CONVERTED_TO_XML));
                                             })
                                             .getFiles()));
+
+                    // If the root project has Java, add its compileClasspath JARs directly to the task
+                    // rather than routing through a consumable config (which would create a variant model
+                    // cycle when plugins like GCV add a self-referencing ProjectDependency on the root).
+                    rootProject.getPlugins().withType(JavaPlugin.class, _javaPlugin -> {
+                        task.getArtifactFiles()
+                                .from(IdeaLanguageInjectorProjectPlugin.sourceSetArtifactView(
+                                        rootProject, CONVERTED_TO_XML));
+                    });
                 });
 
         if (Boolean.getBoolean("idea.active") && Boolean.getBoolean("idea.sync.active")) {
@@ -106,22 +113,6 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
             taskNames.add(":" + update.getName());
             startParameter.setTaskNames(taskNames);
         }
-    }
-
-    /**
-     * When gradle-consistent-versions is applied, it runs {@code configureEach} on all configurations and makes them
-     * extend its {@code rootConfiguration}, which contains a {@code ProjectDependency} on the root project. This
-     * creates a self-referencing cycle during variant model calculation in Gradle 9.4+ because our consumable
-     * configuration is part of the root project's variant model. Excluding our configurations from GCV breaks the
-     * cycle.
-     */
-    private static void excludeFromConsistentVersions(Project rootProject) {
-        rootProject.getPluginManager().withPlugin("com.palantir.consistent-versions", _plugin -> {
-            rootProject
-                    .getExtensions()
-                    .getByType(VersionRecommendationsExtension.class)
-                    .excludeConfigurations("idea-language-injector-outgoing");
-        });
     }
 
     private static void registerTransform(Project rootProject) {
