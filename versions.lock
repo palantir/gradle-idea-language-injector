@@ -24,6 +24,14 @@ com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava (1 c
 
 com.google.j2objc:j2objc-annotations:3.1 (1 constraints: b809f1a0)
 
+com.palantir.gradle.consistentversions:gradle-consistent-versions:3.13.0 (1 constraints: 39053e3b)
+
+com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (1 constraints: b71b1c46)
+
+com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
+
+one.util:streamex:0.8.4 (1 constraints: c01b2d46)
+
 org.codehaus.woodstox:stax2-api:4.2.2 (2 constraints: 6a278bd2)
 
 org.immutables:value:2.12.1 (1 constraints: 3805363b)
@@ -42,12 +50,6 @@ cglib:cglib-nodep:3.2.2 (1 constraints: 490ded24)
 
 com.netflix.nebula:nebula-test:10.6.2 (2 constraints: d61de72d)
 
-com.palantir.gradle.consistentversions:gradle-consistent-versions:3.13.0 (1 constraints: 39053e3b)
-
-com.palantir.gradle.failure-reports:gradle-failure-reports-exceptions:1.2.0 (1 constraints: b71b1c46)
-
-com.palantir.gradle.idea-configuration:gradle-idea-configuration:0.7.0 (1 constraints: bb1b2646)
-
 com.palantir.gradle.plugintesting:configuration-cache-spec:0.62.0 (1 constraints: 3a053d3b)
 
 com.palantir.gradle.plugintesting:discover-tests-cli:0.62.0 (1 constraints: 3a053d3b)
@@ -63,8 +65,6 @@ info.picocli:picocli:4.7.7 (1 constraints: 2816dcdd)
 junit:junit:4.13.2 (3 constraints: 052421c6)
 
 net.bytebuddy:byte-buddy:1.18.3 (1 constraints: 530b55df)
-
-one.util:streamex:0.8.4 (1 constraints: c01b2d46)
 
 org.apiguardian:apiguardian-api:1.1.2 (7 constraints: cc761de9)
 

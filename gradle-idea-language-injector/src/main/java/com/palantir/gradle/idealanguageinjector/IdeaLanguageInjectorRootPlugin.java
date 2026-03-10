@@ -114,23 +114,13 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
      * creates a self-referencing cycle during variant model calculation in Gradle 9.4+ because our consumable
      * configuration is part of the root project's variant model. Excluding our configurations from GCV breaks the
      * cycle.
-     *
-     * <p>This started failing in Gradle 9.4.0 due to
-     * <a href="https://github.com/gradle/gradle/pull/36245">gradle/gradle#36245</a> ("Support for providers in
-     * extendsFrom"), which changed {@code DefaultConfiguration.extendsFrom} from an eager {@code Set<Configuration>}
-     * to a lazy {@code ExtendedConfigurations} wrapper. The lazy deferral of inherited dependency collections changes
-     * the reentrancy dynamics during variant model calculation, causing the root project's
-     * {@code CalculatedValueContainer} to be queried before its calculation completes.
      */
     private static void excludeFromConsistentVersions(Project rootProject) {
         rootProject.getPluginManager().withPlugin("com.palantir.consistent-versions", _plugin -> {
             rootProject
                     .getExtensions()
                     .getByType(VersionRecommendationsExtension.class)
-                    .excludeConfigurations(
-                            "idea-language-injector-outgoing",
-                            "idea-language-injector-subprojects",
-                            "collected-idea-language-injector-outgoing");
+                    .excludeConfigurations("idea-language-injector-outgoing");
         });
     }
 
