@@ -11,6 +11,8 @@ dependencies {
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     implementation 'org.ow2.asm:asm'
 
+    compileOnly 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
+
     annotationProcessor 'org.immutables:value'
     compileOnly 'org.immutables:value::annotations'
 
@@ -18,6 +20,8 @@ dependencies {
     testImplementation 'com.netflix.nebula:nebula-test'
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+
+    gradlePluginForTesting 'com.palantir.gradle.consistentversions:gradle-consistent-versions'
 }
 
 tasks.withType(Test) {

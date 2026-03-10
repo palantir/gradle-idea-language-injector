@@ -8,3 +8,4 @@ org.junit.platform:* = 6.0.3
 com.fasterxml.jackson.*:* = 2.21.1
 org.ow2.asm:asm = 9.9.1
 org.immutables:value = 2.12.1
+com.palantir.gradle.consistentversions:gradle-consistent-versions = 3.13.0

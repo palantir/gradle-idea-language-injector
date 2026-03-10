@@ -18,6 +18,7 @@ package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
+import com.palantir.gradle.versions.VersionRecommendationsExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
 
         registerTransform(rootProject);
+        excludeFromConsistentVersions(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
@@ -104,6 +106,32 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
             taskNames.add(":" + update.getName());
             startParameter.setTaskNames(taskNames);
         }
+    }
+
+    /**
+     * When gradle-consistent-versions is applied, it runs {@code configureEach} on all configurations and makes them
+     * extend its {@code rootConfiguration}, which contains a {@code ProjectDependency} on the root project. This
+     * creates a self-referencing cycle during variant model calculation in Gradle 9.4+ because our consumable
+     * configuration is part of the root project's variant model. Excluding our configurations from GCV breaks the
+     * cycle.
+     *
+     * <p>This started failing in Gradle 9.4.0 due to
+     * <a href="https://github.com/gradle/gradle/pull/36245">gradle/gradle#36245</a> ("Support for providers in
+     * extendsFrom"), which changed {@code DefaultConfiguration.extendsFrom} from an eager {@code Set<Configuration>}
+     * to a lazy {@code ExtendedConfigurations} wrapper. The lazy deferral of inherited dependency collections changes
+     * the reentrancy dynamics during variant model calculation, causing the root project's
+     * {@code CalculatedValueContainer} to be queried before its calculation completes.
+     */
+    private static void excludeFromConsistentVersions(Project rootProject) {
+        rootProject.getPluginManager().withPlugin("com.palantir.consistent-versions", _plugin -> {
+            rootProject
+                    .getExtensions()
+                    .getByType(VersionRecommendationsExtension.class)
+                    .excludeConfigurations(
+                            "idea-language-injector-outgoing",
+                            "idea-language-injector-subprojects",
+                            "collected-idea-language-injector-outgoing");
+        });
     }
 
     private static void registerTransform(Project rootProject) {
