@@ -330,4 +330,13 @@ class IdeaLanguageInjectorTest {
 
         assertThat(actual).as("IntelliLang.xml should match expected").isEqualTo(expected);
     }
+
+    @Test
+    void compatible_with_consistent_versions(GradleInvoker gradle, RootProject rootProject) {
+        rootProject.buildGradle().plugins().add("com.palantir.consistent-versions");
+        rootProject.file("versions.props").createEmpty();
+        rootProject.file("versions.lock").createEmpty();
+
+        gradle.withArgs("compileJava").buildsSuccessfully();
+    }
 }
