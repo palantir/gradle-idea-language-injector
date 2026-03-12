@@ -18,7 +18,6 @@ package com.palantir.gradle.idealanguageinjector;
 
 import com.palantir.gradle.idealanguageinjector.intellilang.UpdateIntelliLang;
 import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
-import com.palantir.gradle.versions.VersionRecommendationsExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
 
         registerTransform(rootProject);
-        excludeFromConsistentVersions(rootProject);
+        registerAttributeRules(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
@@ -77,7 +76,6 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                                     .getConfigurations()
                                     .resolvable("collected-idea-language-injector-outgoing", conf -> {
                                         conf.extendsFrom(subprojectDependencies.get());
-                                        conf.setTransitive(false);
                                         conf.attributes(attrs -> {
                                             attrs.attribute(
                                                     Usage.USAGE_ATTRIBUTE,
@@ -108,26 +106,17 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
     }
 
-    /**
-     * When gradle-consistent-versions is applied, it runs {@code configureEach} on all configurations and makes them
-     * extend its {@code rootConfiguration}, which contains a {@code ProjectDependency} on the root project. This
-     * creates a self-referencing cycle during variant model calculation in Gradle 9.4+ because our consumable
-     * configuration is part of the root project's variant model. Excluding our configurations from GCV breaks the
-     * cycle.
-     */
-    private static void excludeFromConsistentVersions(Project rootProject) {
-        rootProject.getPluginManager().withPlugin("com.palantir.consistent-versions", _plugin -> {
-            rootProject
-                    .getExtensions()
-                    .getByType(VersionRecommendationsExtension.class)
-                    .excludeConfigurations("idea-language-injector-outgoing");
-        });
-    }
-
     private static void registerTransform(Project rootProject) {
         rootProject.getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
             spec.getFrom().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE);
             spec.getTo().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, CONVERTED_TO_XML);
+        });
+    }
+
+    private static void registerAttributeRules(Project rootProject) {
+        rootProject.getDependencies().getAttributesSchema().attribute(Usage.USAGE_ATTRIBUTE, strategy -> {
+            strategy.getCompatibilityRules().add(IdeaLanguageInjectorUsageCompatibilityRule.class);
+            strategy.getDisambiguationRules().add(IdeaLanguageInjectorUsageDisambiguationRule.class);
         });
     }
 }

@@ -15,19 +15,19 @@
  */
 package com.palantir.gradle.idealanguageinjector;
 
-import java.io.File;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConsumableConfiguration;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
-    static final String OUTGOING_USAGE = "idea-language-injector-jars";
+    static final String OUTGOING_USAGE = "idea-language-injector-classpath";
 
     @Override
     public final void apply(Project project) {
@@ -37,26 +37,19 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
     }
 
     private static void createOutgoingConfiguration(Project project) {
-        project.getConfigurations().consumable("idea-language-injector-outgoing", outgoing -> {
-            outgoing.attributes(attrs -> {
+        NamedDomainObjectProvider<ConsumableConfiguration> outgoing =
+                project.getConfigurations().consumable("idea-language-injector-outgoing");
+
+        outgoing.configure(conf -> {
+            conf.attributes(attrs -> {
                 attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, OUTGOING_USAGE));
             });
 
-            outgoing.getOutgoing().artifacts(project.provider(() -> sourceSetArtifacts(project)));
+            for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
+                Configuration compileClasspath =
+                        project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
+                conf.extendsFrom(compileClasspath.getExtendsFrom().toArray(new Configuration[0]));
+            }
         });
-    }
-
-    private static Set<File> sourceSetArtifacts(Project project) {
-        return project.getExtensions().getByType(SourceSetContainer.class).stream()
-                .flatMap(sourceSet -> project
-                        .getConfigurations()
-                        .getByName(sourceSet.getCompileClasspathConfigurationName())
-                        .getIncoming()
-                        .artifactView(view -> view.attributes(attrs -> attrs.attribute(
-                                ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)))
-                        .getFiles()
-                        .getFiles()
-                        .stream())
-                .collect(Collectors.toSet());
     }
 }
