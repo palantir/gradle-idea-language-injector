@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.palantir.gradle.testing.execution.GradleInvoker;
 import com.palantir.gradle.testing.execution.InvocationResult;
 import com.palantir.gradle.testing.execution.TaskOutcome;
-import com.palantir.gradle.testing.junit.DisabledConfigurationCache;
 import com.palantir.gradle.testing.junit.GradlePluginTests;
 import com.palantir.gradle.testing.project.RootProject;
 import com.palantir.gradle.testing.project.SubProject;
@@ -30,7 +29,6 @@ import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("LineLength")
 @GradlePluginTests
-@DisabledConfigurationCache
 class IdeaLanguageInjectorTest {
     private static final String SIMPLE_LIB = "com.example:simple-lib:1.0.0";
     private static final String COMPLEX_LIB = "com.example:complex-lib:1.0.0";
