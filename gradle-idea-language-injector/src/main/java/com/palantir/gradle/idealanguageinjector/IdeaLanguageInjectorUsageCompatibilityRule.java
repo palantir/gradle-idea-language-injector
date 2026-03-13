@@ -15,6 +15,7 @@
  */
 package com.palantir.gradle.idealanguageinjector;
 
+import java.util.Optional;
 import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.attributes.Usage;
@@ -28,11 +29,17 @@ public abstract class IdeaLanguageInjectorUsageCompatibilityRule implements Attr
 
     @Override
     public final void execute(CompatibilityCheckDetails<Usage> details) {
-        if (details.getConsumerValue() != null
-                && IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE.equals(
-                        details.getConsumerValue().getName())
-                && details.getProducerValue() != null
-                && Usage.JAVA_API.equals(details.getProducerValue().getName())) {
+        boolean consumerMatches = Optional.ofNullable(details.getConsumerValue())
+                .map(Usage::getName)
+                .map(IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE::equals)
+                .orElse(false);
+
+        boolean producerMatches = Optional.ofNullable(details.getProducerValue())
+                .map(Usage::getName)
+                .map(Usage.JAVA_API::equals)
+                .orElse(false);
+
+        if (consumerMatches && producerMatches) {
             details.compatible();
         }
     }

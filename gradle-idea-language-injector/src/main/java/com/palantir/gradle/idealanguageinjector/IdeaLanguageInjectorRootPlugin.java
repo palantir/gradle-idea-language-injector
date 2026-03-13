@@ -21,20 +21,37 @@ import com.palantir.gradle.idealanguageinjector.scan.AnnotationScanTransform;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.inject.Inject;
 import org.gradle.StartParameter;
 import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.TaskProvider;
 
 public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> {
 
     static final String CONVERTED_TO_XML = "idea-language-injector-jars";
+
+    @Inject
+    protected abstract ObjectFactory getObjects();
+
+    @Inject
+    protected abstract ProviderFactory getProviders();
+
+    @Inject
+    protected abstract DependencyHandler getDependencies();
+
+    @Inject
+    protected abstract ConfigurationContainer getConfigurations();
 
     @Override
     public final void apply(Project rootProject) {
@@ -43,11 +60,11 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                     "The com.palantir.idea-language-injector plugin must be applied on the root project");
         }
 
-        registerTransform(rootProject);
-        registerUsageCompatibilityRule(rootProject);
+        registerTransform();
+        registerUsageCompatibilityRule();
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
-                rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
+                getConfigurations().dependencyScope("idea-language-injector-subprojects");
 
         // to make this plugin isolated projects compatible instead of applying the project plugin here apply via a
         // settings plugin
@@ -60,27 +77,26 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         subprojectDependencies.configure(subprojectDeps -> {
             subprojectDeps
                     .getDependencies()
-                    .addAllLater(rootProject.provider(() -> rootProject.getAllprojects().stream()
-                            .map(subproject -> rootProject
-                                    .getDependencies()
-                                    .project(Map.of(
-                                            "path", subproject.getIsolated().getPath())))
-                            .toList()));
+                    .addAllLater(getProviders()
+                            .provider(() -> rootProject.getAllprojects().stream()
+                                    .map(subproject -> getDependencies()
+                                            .project(Map.of(
+                                                    "path",
+                                                    subproject.getIsolated().getPath())))
+                                    .toList()));
         });
 
         TaskProvider<UpdateIntelliLang> update = rootProject
                 .getTasks()
                 .register("updateIntelliLangXml", UpdateIntelliLang.class, task -> {
                     task.getArtifactFiles()
-                            .from(rootProject
-                                    .getConfigurations()
+                            .from(getConfigurations()
                                     .resolvable("collected-idea-language-injector-outgoing", conf -> {
                                         conf.extendsFrom(subprojectDependencies.get());
                                         conf.attributes(attrs -> {
                                             attrs.attribute(
                                                     Usage.USAGE_ATTRIBUTE,
-                                                    rootProject
-                                                            .getObjects()
+                                                    getObjects()
                                                             .named(
                                                                     Usage.class,
                                                                     IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE));
@@ -109,17 +125,16 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
     }
 
-    private static void registerUsageCompatibilityRule(Project rootProject) {
-        rootProject
-                .getDependencies()
+    private void registerUsageCompatibilityRule() {
+        getDependencies()
                 .getAttributesSchema()
                 .attribute(Usage.USAGE_ATTRIBUTE)
                 .getCompatibilityRules()
                 .add(IdeaLanguageInjectorUsageCompatibilityRule.class);
     }
 
-    private static void registerTransform(Project rootProject) {
-        rootProject.getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
+    private void registerTransform() {
+        getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
             spec.getFrom().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE);
             spec.getTo().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, CONVERTED_TO_XML);
         });
