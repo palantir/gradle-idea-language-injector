@@ -29,7 +29,7 @@ public abstract class IdeaLanguageInjectorUsageCompatibilityRule implements Attr
     @Override
     public final void execute(CompatibilityCheckDetails<Usage> details) {
         if (details.getConsumerValue() != null
-                && IdeaLanguageInjectorProjectPlugin.USAGE_NAME.equals(
+                && IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE.equals(
                         details.getConsumerValue().getName())
                 && details.getProducerValue() != null
                 && Usage.JAVA_API.equals(details.getProducerValue().getName())) {

@@ -83,7 +83,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                                                             .getObjects()
                                                             .named(
                                                                     Usage.class,
-                                                                    IdeaLanguageInjectorProjectPlugin.USAGE_NAME));
+                                                                    IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE));
                                             attrs.attribute(
                                                     ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
                                                     ArtifactTypeDefinition.JAR_TYPE);

@@ -25,7 +25,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 
 public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
-    static final String USAGE_NAME = "idea-language-injector";
+    static final String OUTGOING_USAGE = "idea-language-injector-outgoing";
 
     @Override
     public final void apply(Project project) {
@@ -40,7 +40,7 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
 
         outgoing.configure(conf -> {
             conf.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, USAGE_NAME));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, OUTGOING_USAGE));
             });
 
             project.getExtensions()
