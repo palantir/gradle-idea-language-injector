@@ -26,7 +26,9 @@ import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
+import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
@@ -44,7 +46,6 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
 
         registerTransform(rootProject);
-        registerAttributeRules(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
@@ -61,10 +62,18 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
             subprojectDeps
                     .getDependencies()
                     .addAllLater(rootProject.provider(() -> rootProject.getAllprojects().stream()
-                            .map(subproject -> rootProject
-                                    .getDependencies()
-                                    .project(Map.of(
-                                            "path", subproject.getIsolated().getPath())))
+                            .map(subproject -> {
+                                ProjectDependency dep = (ProjectDependency) rootProject
+                                        .getDependencies()
+                                        .project(Map.of(
+                                                "path", subproject.getIsolated().getPath()));
+                                dep.capabilities(caps -> {
+                                    caps.requireCapability(IdeaLanguageInjectorProjectPlugin.OUTGOING_CAPABILITY_GROUP
+                                            + ":"
+                                            + IdeaLanguageInjectorProjectPlugin.OUTGOING_CAPABILITY_NAME);
+                                });
+                                return (Dependency) dep;
+                            })
                             .toList()));
         });
 
@@ -79,11 +88,10 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                                         conf.attributes(attrs -> {
                                             attrs.attribute(
                                                     Usage.USAGE_ATTRIBUTE,
-                                                    rootProject
-                                                            .getObjects()
-                                                            .named(
-                                                                    Usage.class,
-                                                                    IdeaLanguageInjectorProjectPlugin.OUTGOING_USAGE));
+                                                    rootProject.getObjects().named(Usage.class, Usage.JAVA_API));
+                                            attrs.attribute(
+                                                    ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
+                                                    ArtifactTypeDefinition.JAR_TYPE);
                                         });
                                     })
                                     .map(resolvable -> resolvable
@@ -110,13 +118,6 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         rootProject.getDependencies().registerTransform(AnnotationScanTransform.class, spec -> {
             spec.getFrom().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE);
             spec.getTo().attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, CONVERTED_TO_XML);
-        });
-    }
-
-    private static void registerAttributeRules(Project rootProject) {
-        rootProject.getDependencies().getAttributesSchema().attribute(Usage.USAGE_ATTRIBUTE, strategy -> {
-            strategy.getCompatibilityRules().add(IdeaLanguageInjectorUsageCompatibilityRule.class);
-            strategy.getDisambiguationRules().add(IdeaLanguageInjectorUsageDisambiguationRule.class);
         });
     }
 }

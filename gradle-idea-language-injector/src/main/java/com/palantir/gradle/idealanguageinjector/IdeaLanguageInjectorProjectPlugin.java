@@ -27,7 +27,8 @@ import org.gradle.api.tasks.SourceSetContainer;
 
 public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
-    static final String OUTGOING_USAGE = "idea-language-injector-classpath";
+    static final String OUTGOING_CAPABILITY_GROUP = "com.palantir.gradle.idea-language-injector";
+    static final String OUTGOING_CAPABILITY_NAME = "outgoing";
 
     @Override
     public final void apply(Project project) {
@@ -42,8 +43,14 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
 
         outgoing.configure(conf -> {
             conf.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, OUTGOING_USAGE));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_API));
             });
+
+            // Declaring an explicit capability replaces the implicit default capability (group:name:version),
+            // ensuring this variant is only selected when the consumer explicitly requests it.
+            conf.getOutgoing()
+                    .capability(
+                            OUTGOING_CAPABILITY_GROUP + ":" + OUTGOING_CAPABILITY_NAME + ":" + project.getVersion());
 
             for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
                 Configuration compileClasspath =
