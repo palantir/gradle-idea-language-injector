@@ -1,0 +1,39 @@
+/*
+ * (c) Copyright 2025 Palantir Technologies Inc. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.palantir.gradle.idealanguageinjector;
+
+import org.gradle.api.attributes.AttributeCompatibilityRule;
+import org.gradle.api.attributes.CompatibilityCheckDetails;
+import org.gradle.api.attributes.Usage;
+
+/**
+ * Allows configurations requesting {@link IdeaLanguageInjectorProjectPlugin#USAGE_NAME} usage to resolve
+ * transitive dependencies that only offer {@link Usage#JAVA_API}. The reverse is not true: consumers
+ * requesting {@code JAVA_API} will never match variants offering our custom usage.
+ */
+public abstract class IdeaLanguageInjectorUsageCompatibilityRule implements AttributeCompatibilityRule<Usage> {
+
+    @Override
+    public final void execute(CompatibilityCheckDetails<Usage> details) {
+        if (details.getConsumerValue() != null
+                && IdeaLanguageInjectorProjectPlugin.USAGE_NAME.equals(
+                        details.getConsumerValue().getName())
+                && details.getProducerValue() != null
+                && Usage.JAVA_API.equals(details.getProducerValue().getName())) {
+            details.compatible();
+        }
+    }
+}

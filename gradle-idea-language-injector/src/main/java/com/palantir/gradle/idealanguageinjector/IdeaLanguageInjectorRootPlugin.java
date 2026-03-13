@@ -26,9 +26,7 @@ import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.DependencyScopeConfiguration;
-import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
@@ -46,6 +44,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
         }
 
         registerTransform(rootProject);
+        registerUsageCompatibilityRule(rootProject);
 
         NamedDomainObjectProvider<DependencyScopeConfiguration> subprojectDependencies =
                 rootProject.getConfigurations().dependencyScope("idea-language-injector-subprojects");
@@ -62,18 +61,10 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
             subprojectDeps
                     .getDependencies()
                     .addAllLater(rootProject.provider(() -> rootProject.getAllprojects().stream()
-                            .map(subproject -> {
-                                ProjectDependency dep = (ProjectDependency) rootProject
-                                        .getDependencies()
-                                        .project(Map.of(
-                                                "path", subproject.getIsolated().getPath()));
-                                dep.capabilities(caps -> {
-                                    caps.requireCapability(IdeaLanguageInjectorProjectPlugin.OUTGOING_CAPABILITY_GROUP
-                                            + ":"
-                                            + IdeaLanguageInjectorProjectPlugin.OUTGOING_CAPABILITY_NAME);
-                                });
-                                return (Dependency) dep;
-                            })
+                            .map(subproject -> rootProject
+                                    .getDependencies()
+                                    .project(Map.of(
+                                            "path", subproject.getIsolated().getPath())))
                             .toList()));
         });
 
@@ -88,7 +79,11 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
                                         conf.attributes(attrs -> {
                                             attrs.attribute(
                                                     Usage.USAGE_ATTRIBUTE,
-                                                    rootProject.getObjects().named(Usage.class, Usage.JAVA_API));
+                                                    rootProject
+                                                            .getObjects()
+                                                            .named(
+                                                                    Usage.class,
+                                                                    IdeaLanguageInjectorProjectPlugin.USAGE_NAME));
                                             attrs.attribute(
                                                     ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE,
                                                     ArtifactTypeDefinition.JAR_TYPE);
@@ -112,6 +107,15 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
             taskNames.add(":" + update.getName());
             startParameter.setTaskNames(taskNames);
         }
+    }
+
+    private static void registerUsageCompatibilityRule(Project rootProject) {
+        rootProject
+                .getDependencies()
+                .getAttributesSchema()
+                .attribute(Usage.USAGE_ATTRIBUTE)
+                .getCompatibilityRules()
+                .add(IdeaLanguageInjectorUsageCompatibilityRule.class);
     }
 
     private static void registerTransform(Project rootProject) {

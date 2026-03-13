@@ -18,17 +18,14 @@ package com.palantir.gradle.idealanguageinjector;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConsumableConfiguration;
 import org.gradle.api.attributes.Usage;
 import org.gradle.api.plugins.JavaPlugin;
-import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 
 public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Project> {
 
-    static final String OUTGOING_CAPABILITY_GROUP = "com.palantir.gradle.idea-language-injector";
-    static final String OUTGOING_CAPABILITY_NAME = "outgoing";
+    static final String USAGE_NAME = "idea-language-injector";
 
     @Override
     public final void apply(Project project) {
@@ -43,20 +40,15 @@ public abstract class IdeaLanguageInjectorProjectPlugin implements Plugin<Projec
 
         outgoing.configure(conf -> {
             conf.attributes(attrs -> {
-                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, Usage.JAVA_API));
+                attrs.attribute(Usage.USAGE_ATTRIBUTE, project.getObjects().named(Usage.class, USAGE_NAME));
             });
 
-            // Declaring an explicit capability replaces the implicit default capability (group:name:version),
-            // ensuring this variant is only selected when the consumer explicitly requests it.
-            conf.getOutgoing()
-                    .capability(
-                            OUTGOING_CAPABILITY_GROUP + ":" + OUTGOING_CAPABILITY_NAME + ":" + project.getVersion());
-
-            for (SourceSet sourceSet : project.getExtensions().getByType(SourceSetContainer.class)) {
-                Configuration compileClasspath =
-                        project.getConfigurations().getByName(sourceSet.getCompileClasspathConfigurationName());
-                conf.extendsFrom(compileClasspath.getExtendsFrom().toArray(new Configuration[0]));
-            }
+            project.getExtensions()
+                    .getByType(SourceSetContainer.class)
+                    .all(sourceSet -> project.getConfigurations()
+                            .getByName(sourceSet.getCompileClasspathConfigurationName())
+                            .getExtendsFrom()
+                            .forEach(conf::extendsFrom));
         });
     }
 }
