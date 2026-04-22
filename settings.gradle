@@ -14,3 +14,5 @@ include 'gradle-idea-language-injector'
 include 'test-libraries:simple-lib'
 include 'test-libraries:complex-lib'
 include 'test-libraries:noannotations-lib'
+
+throw new RuntimeException('''The excavator failed to run properly:\n\n''' + file('gradle/exception').text)
