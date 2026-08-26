@@ -40,6 +40,10 @@ apply plugin: 'com.palantir.jdks.latest'
 
 version gitVersion()
 
+dependencies {
+    testRuntimeOnly 'junit:junit'
+}
+
 allprojects {
     apply plugin: 'com.palantir.jakarta-package-alignment'
     apply plugin: 'com.palantir.java-format'
