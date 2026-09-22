@@ -36,6 +36,7 @@ public abstract class IdeaLanguageInjectorRootPlugin implements Plugin<Project> 
 
     static final String CONVERTED_TO_XML = "idea-language-injector-jars";
 
+    @SuppressWarnings("for-rollout:ReferenceEquality")
     @Override
     public final void apply(Project rootProject) {
         if (rootProject != rootProject.getRootProject()) {
