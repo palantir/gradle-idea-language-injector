@@ -27,9 +27,11 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.work.DisableCachingByDefault;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class UpdateIntelliLang extends DefaultTask {
     private static final Logger log = LoggerFactory.getLogger(UpdateIntelliLang.class);
 
