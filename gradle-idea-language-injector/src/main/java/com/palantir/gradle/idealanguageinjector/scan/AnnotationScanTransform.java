@@ -31,8 +31,10 @@ import org.gradle.api.artifacts.transform.TransformOutputs;
 import org.gradle.api.artifacts.transform.TransformParameters.None;
 import org.gradle.api.file.FileSystemLocation;
 import org.gradle.api.provider.Provider;
+import org.gradle.work.DisableCachingByDefault;
 import org.objectweb.asm.ClassReader;
 
+@DisableCachingByDefault(because = "Not opting into build caching; explicit opt-out is required by Gradle 9.7")
 public abstract class AnnotationScanTransform implements TransformAction<None> {
     public static final String LANGUAGE_SCAN_FILE = "language-annotations.injections.xml";
 
